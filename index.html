@@ -3,227 +3,451 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>主页</title>
+    <title>罗清雨</title>
     <style>
+        /* 全局重置样式 */
         * {
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
+            box-sizing: border-box; /* 盒模型设置为边框盒，方便计算 */
         }
         
+        /* 页面主体样式 */
         body {
-            overflow: hidden;
-            background: #000;
-            height: 100vh;
-            font-family: 'Arial', sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* 设置字体族 */
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d); /* 渐变背景 */
+            color: #fff; /* 文字颜色 */
+            min-height: 100vh; /* 最小高度为视口高度 */
+            display: flex; /* 使用flex布局 */
+            flex-direction: column; /* 垂直方向排列 */
+            align-items: center; /* 水平居中 */
+            padding: 20px; /* 内边距 */
+            overflow-x: hidden; /* 隐藏水平滚动条 */
         }
-
+        
+        /* 页面标题样式 */
+        .page-title {
+            text-align: center; /* 文字居中 */
+            font-size: 2.5rem; /* 字体大小 */
+            margin: 20px 0 30px; /* 外边距 */
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3); /* 文字阴影 */
+            width: 100%; /* 宽度100% */
+        }
+        
+        /* 容器包装样式 */
+        .container-wrapper {
+            width: 100%; /* 宽度100% */
+            display: flex; /* 使用flex布局 */
+            justify-content: center; /* 水平居中 */
+            margin-top: 20px; /* 上边距 */
+            flex: 1; /* 占据剩余空间 */
+        }
+        
+        /* 主容器样式 */
+        .container {
+            display: flex; /* 使用flex布局 */
+            justify-content: center; /* 水平居中 */
+            align-items: flex-start; /* 顶部对齐 */
+            gap: 20px; /* 子元素间距 */
+            padding: 20px; /* 内边距 */
+            max-width: 100%; /* 最大宽度100% */
+            flex-wrap: nowrap; /* 不换行 */
+        }
+        
+        /* 形状卡片样式 */
+        .shape {
+            border-radius: 25px; /* 圆角边框 */
+            width: 110px; /* 初始宽度 */
+            height: 400px; /* 初始高度 */
+            cursor: pointer; /* 鼠标指针样式 */
+            transition: all 0.5s ease; /* 过渡动画效果 */
+            overflow: hidden; /* 隐藏溢出内容 */
+            position: relative; /* 相对定位 */
+            flex-shrink: 0; /* 不允许收缩 */
+            box-shadow: 0 5px 15px rgba(221, 215, 215, 0.253); /* 阴影效果 */
+        }
+        
+        /* 形状卡片中的图片样式 */
+        .shape img {
+            width: 100%; /* 宽度100% */
+            height: 100%; /* 高度100% */
+            object-fit: cover; /* 图片填充方式 */
+            display: block; /* 块级显示 */
+            transition: all 0.5s ease; /* 过渡动画效果 */
+        }
+        
+        /* 展开后的形状卡片样式 */
+        .shape.rectangle {
+            border-radius: 25px; /* 保持圆角 */
+            width: 600px; /* 展开后的宽度 */
+            height: 400px; /* 展开后的高度 */
+            z-index: 10; /* 提高层级，确保显示在最前面 */
+        }
+        
+        /* 形状卡片标题样式 */
+        .title {
+            position: absolute; /* 绝对定位 */
+            bottom: 20px; /* 距离底部20px */
+            left: 0; /* 距离左侧0 */
+            width: 100%; /* 宽度100% */
+            text-align: center; /* 文字居中 */
+            color: white; /* 文字颜色 */
+            font-weight: bold; /* 字体粗细 */
+            font-size: 18px; /* 字体大小 */
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.7); /* 文字阴影 */
+            opacity: 0; /* 初始透明度为0（隐藏） */
+            transition: opacity 0.3s ease; /* 透明度过渡效果 */
+            z-index: 2; /* 层级 */
+        }
+        
+        /* 鼠标悬停时显示标题 */
+        .shape:hover .title {
+            opacity: 1; /* 显示标题 */
+        }
+        
+        /* 展开状态下显示标题 */
+        .shape.rectangle .title {
+            opacity: 1; /* 显示标题 */
+        }
+        
+        /* 形状编号样式 */
+        .shape-number {
+            position: absolute; /* 绝对定位 */
+            top: 20px; /* 距离顶部20px */
+            left: 0; /* 距离左侧0 */
+            width: 100%; /* 宽度100% */
+            text-align: center; /* 文字居中 */
+            color: white; /* 文字颜色 */
+            font-weight: bold; /* 字体粗细 */
+            font-size: 24px; /* 字体大小 */
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.7); /* 文字阴影 */
+            z-index: 2; /* 层级 */
+        }
+        
+        /* 星空背景容器样式 */
         .stars-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 0;
+            position: fixed; /* 固定定位 */
+            top: 0; /* 距离顶部0 */
+            left: 0; /* 距离左侧0 */
+            width: 100%; /* 宽度100% */
+            height: 100%; /* 高度100% */
+            z-index: 0; /* 层级，确保在背景层 */
         }
 
+        /* 星星样式 */
         .star {
-            position: absolute;
-            background: white;
-            border-radius: 50%;
-            animation: twinkle var(--duration) ease-in-out infinite;
+            position: absolute; /* 绝对定位 */
+            background: white; /* 背景颜色 */
+            border-radius: 50%; /* 圆形 */
+            animation: twinkle var(--duration) ease-in-out infinite; /* 闪烁动画 */
         }
 
+        /* 星星闪烁动画 */
         @keyframes twinkle {
             0%, 100% {
-                opacity: 0.3;
-                transform: scale(0.5);
+                opacity: 0.3; /* 透明度 */
+                transform: scale(0.5); /* 缩放 */
             }
             50% {
-                opacity: 1;
-                transform: scale(1);
+                opacity: 1; /* 透明度 */
+                transform: scale(1); /* 缩放 */
             }
         }
 
-        /* 流星效果 */
+        /* 流星样式 */
         .meteor {
-            position: absolute;
-            width: 100px;
-            height: 2px;
-            background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,1) 100%);
-            animation: meteorFall 2s linear infinite;
-            transform: rotate(-45deg);
+            position: absolute; /* 绝对定位 */
+            width: 100px; /* 宽度 */
+            height: 2px; /* 高度 */
+            background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,1) 100%); /* 渐变背景 */
+            animation: meteorFall 2s linear infinite; /* 流星下落动画 */
+            transform: rotate(-45deg); /* 旋转角度 */
         }
 
+        /* 流星下落动画 */
         @keyframes meteorFall {
             0% {
-                left: -100px;
-                top: -100px;
-                opacity: 1;
+                left: -100px; /* 起始位置左侧 */
+                top: -100px; /* 起始位置顶部 */
+                opacity: 1; /* 透明度 */
             }
             100% {
-                left: 100%;
-                top: 100%;
-                opacity: 0;
+                left: 100%; /* 结束位置左侧 */
+                top: 100%; /* 结束位置顶部 */
+                opacity: 0; /* 透明度 */
             }
         }
 
-        /* 卡片容器 */
+        /* 卡片游戏容器样式 */
         .card-game-container {
-            position: relative;
-            z-index: 10;
-            width: 100%;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
+            position: relative; /* 相对定位 */
+            z-index: 10; /* 层级 */
+            width: 100%; /* 宽度100% */
+            height: 300px; /* 高度 */
+            display: flex; /* 使用flex布局 */
+            flex-direction: column; /* 垂直方向排列 */
+            align-items: center; /* 水平居中 */
+            justify-content: flex-end; /* 底部对齐 */
+            margin-bottom: 20px; /* 下边距 */
         }
         
-        h1 {
-            color: white;
-            margin-bottom: 40px;
-            text-shadow: 0 2px 10px rgba(0,0,0,0.3);
-            font-size: 2.5rem;
-        }
-        
+        /* 卡片容器样式 */
         .cards-container {
-            position: relative;
-            width: 100%;
-            height: 300px;
-            margin: 0 auto;
+            position: relative; /* 相对定位 */
+            width: 100%; /* 宽度100% */
+            height: 100%; /* 高度100% */
+            margin: 0 auto; /* 水平居中 */
         }
         
+        /* 卡片样式 */
         .card {
-            position: absolute;
-            width: 150px;
-            height: 200px;
-            border-radius: 12px;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
-            transition: all 0.5s ease;
-            cursor: pointer;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            color: white;
-            font-weight: bold;
-            font-size: 1.2rem;
-            text-shadow: 0 1px 3px rgba(0,0,0,0.5);
-            left: 50%;
-            top: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 1;
+            position: absolute; /* 绝对定位 */
+            width: 150px; /* 宽度 */
+            height: 200px; /* 高度 */
+            border-radius: 12px; /* 圆角边框 */
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3); /* 阴影效果 */
+            transition: all 0.5s ease; /* 过渡动画效果 */
+            cursor: pointer; /* 鼠标指针样式 */
+            display: flex; /* 使用flex布局 */
+            flex-direction: column; /* 垂直方向排列 */
+            justify-content: center; /* 垂直居中 */
+            align-items: center; /* 水平居中 */
+            color: white; /* 文字颜色 */
+            font-weight: bold; /* 字体粗细 */
+            font-size: 1.2rem; /* 字体大小 */
+            text-shadow: 0 1px 3px rgba(0,0,0,0.5); /* 文字阴影 */
+            left: 50%; /* 距离左侧50% */
+            top: 50%; /* 距离顶部50% */
+            transform: translate(-50%, -50%); /* 居中定位 */
+            z-index: 1; /* 层级 */
             
-            /* 透明背景 */
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            /* 毛玻璃效果背景 */
+            background: rgba(255, 255, 255, 0.1); /* 半透明背景 */
+            backdrop-filter: blur(10px); /* 背景模糊 */
+            -webkit-backup-filter: blur(10px); /* Safari兼容性 */
+            border: 1px solid rgba(255, 255, 255, 0.2); /* 边框 */
         }
         
-        /* 发光边框效果 */
+        /* 卡片发光边框效果 */
         .card::before {
-            content: '';
-            position: absolute;
-            top: -2px;
-            left: -2px;
-            right: -2px;
-            bottom: -2px;
-            background: linear-gradient(45deg, #ff7e5f, #feb47b, #00c6ff, #0072ff, #834d9b, #d04ed6, #2af598, #009efd);
-            background-size: 400% 400%;
-            border-radius: 14px;
-            z-index: -1;
-            animation: glowing-border 3s linear infinite;
-            opacity: 0;
-            transition: opacity 0.3s ease;
+            content: ''; /* 伪元素内容为空 */
+            position: absolute; /* 绝对定位 */
+            top: -2px; /* 位置调整 */
+            left: -2px; /* 位置调整 */
+            right: -2px; /* 位置调整 */
+            bottom: -2px; /* 位置调整 */
+            background: linear-gradient(45deg, #ff7e5f, #feb47b, #00c6ff, #0072ff, #834d9b, #d04ed6, #2af598, #009efd); /* 渐变背景 */
+            background-size: 400% 400%; /* 背景大小 */
+            border-radius: 14px; /* 圆角边框 */
+            z-index: -1; /* 层级在卡片下方 */
+            animation: glowing-border 3s linear infinite; /* 发光边框动画 */
+            opacity: 0; /* 初始透明度为0（隐藏） */
+            transition: opacity 0.3s ease; /* 透明度过渡效果 */
         }
         
+        /* 鼠标悬停时显示发光边框 */
         .card:hover::before {
-            opacity: 1;
+            opacity: 1; /* 显示边框 */
         }
         
+        /* 选中卡片显示发光边框 */
         .card.selected::before {
-            opacity: 1;
-            animation: glowing-border 1.5s linear infinite;
+            opacity: 1; /* 显示边框 */
+            animation: glowing-border 1.5s linear infinite; /* 加快动画速度 */
         }
         
+        /* 发光边框动画 */
         @keyframes glowing-border {
             0% {
-                background-position: 0% 50%;
-                filter: hue-rotate(0deg);
+                background-position: 0% 50%; /* 背景位置 */
+                filter: hue-rotate(0deg); /* 色相旋转 */
             }
             50% {
-                background-position: 100% 50%;
+                background-position: 100% 50%; /* 背景位置 */
             }
             100% {
-                background-position: 0% 50%;
-                filter: hue-rotate(360deg);
+                background-position: 0% 50%; /* 背景位置 */
+                filter: hue-rotate(360deg); /* 色相旋转 */
             }
         }
         
+        /* 卡片图标样式 */
         .card-icon {
-            font-size: 2.5rem;
-            margin-bottom: 15px;
+            font-size: 2.5rem; /* 字体大小 */
+            margin-bottom: 15px; /* 下边距 */
         }
         
+        /* 卡片标题样式 */
         .card-title {
-            font-size: 1rem;
-            transition: color 0.3s;
+            font-size: 1rem; /* 字体大小 */
+            transition: color 0.3s; /* 颜色过渡效果 */
         }
         
-        /* 悬停时卡片散开 */
+        /* 悬停时卡片散开效果 */
         .cards-container:hover .card {
-            transform: translate(-50%, -50%) rotate(var(--rotation)) translateX(var(--offset));
+            transform: translate(-50%, -50%) rotate(var(--rotation)) translateX(var(--offset)); /* 变换效果 */
         }
         
         /* 选中卡片升起效果 */
         .card.selected {
-            transform: translate(-50%, -150%) scale(1.2) !important;
-            z-index: 10;
-            box-shadow: 0 15px 30px rgba(0,0,0,0.4);
+            transform: translate(-50%, -150%) scale(1.2) !important; /* 升起并放大 */
+            z-index: 10; /* 提高层级 */
+            box-shadow: 0 15px 30px rgba(0,0,0,0.4); /* 阴影效果 */
         }
         
         /* 选中卡片文字样式 */
         .card.selected .card-title {
-            color: #ffeb3b;
-            text-shadow: 0 0 10px rgba(255, 235, 59, 0.7);
+            color: #ffeb3b; /* 文字颜色 */
+            text-shadow: 0 0 10px rgba(255, 235, 59, 0.7); /* 文字阴影 */
         }
         
         /* 选中卡片添加链接样式 */
         .card.selected .card-title a {
-            color: #ffeb3b;
-            text-decoration: none;
-            cursor: pointer;
+            color: #ffeb3b; /* 链接颜色 */
+            text-decoration: none; /* 去除下划线 */
+            cursor: pointer; /* 鼠标指针样式 */
         }
         
+        /* 链接悬停效果 */
         .card.selected .card-title a:hover {
-            text-decoration: underline;
+            text-decoration: underline; /* 添加下划线 */
         }
         
-        /* 未选中卡片变暗 */
+        /* 未选中卡片变暗效果 */
         .cards-container.has-selected .card:not(.selected) {
-            opacity: 0.4;
-            filter: blur(2px);
+            opacity: 0.4; /* 降低透明度 */
+            filter: blur(2px); /* 模糊效果 */
         }
         
+        /* 说明文字样式 */
         .instructions {
-            color: white;
-            margin-top: 40px;
-            font-size: 1.1rem;
-            max-width: 600px;
-            line-height: 1.6;
-            text-align: center;
-            text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+            text-align: center; /* 文字居中 */
+            font-size: 1.1rem; /* 字体大小 */
+            max-width: 600px; /* 最大宽度 */
+            margin: 30px auto; /* 外边距 */
+            line-height: 1.6; /* 行高 */
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3); /* 文字阴影 */
+            padding: 0 20px; /* 内边距 */
+        }
+        
+        /* 响应式设计 - 大屏幕 */
+        @media (max-width: 1400px) {
+            .container {
+                gap: 15px; /* 调整间距 */
+            }
+            
+            .shape {
+                width: 100px; /* 调整宽度 */
+                height: 350px; /* 调整高度 */
+            }
+            
+            .shape.rectangle {
+                width: 500px; /* 调整展开宽度 */
+                height: 350px; /* 调整展开高度 */
+            }
+        }
+        
+        /* 响应式设计 - 中等屏幕 */
+        @media (max-width: 1200px) {
+            .shape {
+                width: 90px; /* 调整宽度 */
+                height: 320px; /* 调整高度 */
+            }
+            
+            .shape.rectangle {
+                width: 450px; /* 调整展开宽度 */
+                height: 320px; /* 调整展开高度 */
+            }
+        }
+        
+        /* 响应式设计 - 小屏幕 */
+        @media (max-width: 992px) {
+            .container {
+                gap: 10px; /* 调整间距 */
+            }
+            
+            .shape {
+                width: 80px; /* 调整宽度 */
+                height: 300px; /* 调整高度 */
+            }
+            
+            .shape.rectangle {
+                width: 400px; /* 调整展开宽度 */
+                height: 300px; /* 调整展开高度 */
+            }
+        }
+        
+        /* 响应式设计 - 移动设备 */
+        @media (max-width: 768px) {
+            .container {
+                flex-wrap: wrap; /* 允许换行 */
+                justify-content: center; /* 水平居中 */
+                height: auto; /* 高度自适应 */
+            }
+            
+            .shape {
+                width: 150px; /* 调整宽度 */
+                height: 200px; /* 调整高度 */
+            }
+            
+            .shape.rectangle {
+                width: 350px; /* 调整展开宽度 */
+                height: 250px; /* 调整展开高度 */
+            }
         }
     </style>
 </head>
 <body>
+    <!-- 星空背景容器 -->
     <div class="stars-container" id="starsContainer"></div>
     
+    <!-- 主内容容器 -->
+    <div class="container-wrapper">
+        <div class="container">
+            <!-- 九个形状卡片，每个包含标题和图片 -->
+            <div class="shape" id="shape1">
+                <div class="title">山谷木屋</div>
+                <img src="3q.png" alt="山谷木屋">
+            </div>
+            <div class="shape" id="shape2">
+                <div class="title">布达拉宫</div>
+                <img src="4q.png" alt="布达拉宫">
+            </div>
+            <div class="shape" id="shape3">
+                <div class="title">雪夜木屋</div>
+                <img src="5q.png" alt="雪夜木屋">
+            </div>
+            <div class="shape" id="shape4">
+                <div class="title">海边日落</div>
+                <img src="6q.png" alt="海边日落">
+            </div>
+            <div class="shape" id="shape5">
+                <div class="title">花海日出</div>
+                <img src="7q.png" alt="花海日出">
+            </div>
+            <div class="shape" id="shape6">
+                <div class="title">红叶飘飞</div>
+                <img src="1q.png" alt="红叶飘飞">
+            </div>
+            <div class="shape" id="shape7">
+                <div class="title">赠花剪影</div>
+                <img src="2q.png" alt="赠花剪影">
+            </div>
+            <div class="shape" id="shape8">
+                <div class="title">雪山远眺</div>
+                <img src="91.png" alt="雪山远眺">
+            </div>
+            <div class="shape" id="shape9">
+                <div class="title">森林迷雾</div>
+                <img src="81.png" alt="森林迷雾">
+            </div>
+        </div>
+    </div>
+    
+    <!-- 卡片游戏区域 - 位于页面底部中央 -->
     <div class="card-game-container">
-            
         <div class="cards-container" id="cardsContainer">
+            <!-- 五个功能卡片，每个包含图标和标题 -->
             <div class="card" data-index="0">
                 <div class="card-icon">🔐</div>
                 <div class="card-title">登录</div>
@@ -234,7 +458,7 @@
             </div>
             <div class="card" data-index="2">
                 <div class="card-icon">🎵</div>
-                <div class="card-title">网易云音乐</div>
+                <div class="card-title">消息弹窗</div>
             </div>
             <div class="card" data-index="3">
                 <div class="card-icon">📱</div>
@@ -245,14 +469,35 @@
                 <div class="card-title">快手</div>
             </div>
         </div>
-        </div>
+    </div>
+    
+    <!-- 说明文字区域 -->
+    <div class="instructions">
+    </div>
 
     <script>
+        // 获取所有形状卡片元素
+        const shapes = document.querySelectorAll('.shape');
+        
+        // 为每个形状卡片添加点击事件监听器
+        shapes.forEach(shape => {
+            shape.addEventListener('click', function() {
+                // 如果当前形状已经是展开状态，则收缩它
+                if (this.classList.contains('rectangle')) {
+                    this.classList.remove('rectangle');
+                } else {
+                    // 否则，收缩所有形状，然后展开当前形状
+                    shapes.forEach(s => s.classList.remove('rectangle'));
+                    this.classList.add('rectangle');
+                }
+            });
+        });
+
         // 卡片数据 - 包含标题和链接
         const cardData = [
             { title: "登录", link: "登录1.html" }, // 本地文件
             { title: "爱心", link: "登录2.html" }, // 本地文件
-            { title: "网易云音乐", link: "https://music.163.com" },
+            { title: "消息弹窗", link: "登录3.html" },
             { title: "抖音", link: "https://www.douyin.com/user/self?from_tab_name=main&showTab=post" },
             { title: "快手", link: "https://www.kuaishou.com/profile/3xshapk8zhsdrx4?source=NewReco" }
         ];
@@ -268,11 +513,12 @@
                 star.className = 'star';
                 
                 // 随机属性
-                const size = Math.random() * 3;
-                const x = Math.random() * 100;
-                const y = Math.random() * 100;
-                const duration = Math.random() * 3 + 1 + 's';
+                const size = Math.random() * 3; // 随机大小
+                const x = Math.random() * 100; // 随机水平位置
+                const y = Math.random() * 100; // 随机垂直位置
+                const duration = Math.random() * 3 + 1 + 's'; // 随机动画持续时间
                 
+                // 设置星星样式
                 star.style.cssText = `
                     width: ${size}px;
                     height: ${size}px;
@@ -289,10 +535,11 @@
             setInterval(() => {
                 const meteor = document.createElement('div');
                 meteor.className = 'meteor';
-                meteor.style.top = Math.random() * 50 + '%';
-                meteor.style.left = Math.random() * 50 + '%';
+                meteor.style.top = Math.random() * 50 + '%'; // 随机垂直位置
+                meteor.style.left = Math.random() * 50 + '%'; // 随机水平位置
                 container.appendChild(meteor);
                 
+                // 2秒后移除流星元素
                 setTimeout(() => meteor.remove(), 2000);
             }, 3000);
         }
@@ -361,6 +608,7 @@
                 const titleElement = card.querySelector('.card-title');
                 const originalText = titleElement.textContent;
                 const link = cardData[index].link;
+                // 前两个卡片在当前窗口打开，其他在新窗口打开
                 titleElement.innerHTML = `<a href="${link}" target="${index < 2 ? '_self' : '_blank'}">${originalText}</a>`;
             }
             
