@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>主页</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            overflow: hidden;
+            background: #000;
+            height: 100vh;
+            font-family: 'Arial', sans-serif;
+        }
+
+        .stars-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle var(--duration) ease-in-out infinite;
+        }
+
+        @keyframes twinkle {
+            0%, 100% {
+                opacity: 0.3;
+                transform: scale(0.5);
+            }
+            50% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        /* 流星效果 */
+        .meteor {
+            position: absolute;
+            width: 100px;
+            height: 2px;
+            background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,1) 100%);
+            animation: meteorFall 2s linear infinite;
+            transform: rotate(-45deg);
+        }
+
+        @keyframes meteorFall {
+            0% {
+                left: -100px;
+                top: -100px;
+                opacity: 1;
+            }
+            100% {
+                left: 100%;
+                top: 100%;
+                opacity: 0;
+            }
+        }
+
+        /* 卡片容器 */
+        .card-game-container {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        h1 {
+            color: white;
+            margin-bottom: 40px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            font-size: 2.5rem;
+        }
+        
+        .cards-container {
+            position: relative;
+            width: 100%;
+            height: 300px;
+            margin: 0 auto;
+        }
+        
+        .card {
+            position: absolute;
+            width: 150px;
+            height: 200px;
+            border-radius: 12px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+            transition: all 0.5s ease;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-weight: bold;
+            font-size: 1.2rem;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1;
+            
+            /* 透明背景 */
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        /* 发光边框效果 */
+        .card::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, #ff7e5f, #feb47b, #00c6ff, #0072ff, #834d9b, #d04ed6, #2af598, #009efd);
+            background-size: 400% 400%;
+            border-radius: 14px;
+            z-index: -1;
+            animation: glowing-border 3s linear infinite;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .card:hover::before {
+            opacity: 1;
+        }
+        
+        .card.selected::before {
+            opacity: 1;
+            animation: glowing-border 1.5s linear infinite;
+        }
+        
+        @keyframes glowing-border {
+            0% {
+                background-position: 0% 50%;
+                filter: hue-rotate(0deg);
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+            100% {
+                background-position: 0% 50%;
+                filter: hue-rotate(360deg);
+            }
+        }
+        
+        .card-icon {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+        }
+        
+        .card-title {
+            font-size: 1rem;
+            transition: color 0.3s;
+        }
+        
+        /* 悬停时卡片散开 */
+        .cards-container:hover .card {
+            transform: translate(-50%, -50%) rotate(var(--rotation)) translateX(var(--offset));
+        }
+        
+        /* 选中卡片升起效果 */
+        .card.selected {
+            transform: translate(-50%, -150%) scale(1.2) !important;
+            z-index: 10;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.4);
+        }
+        
+        /* 选中卡片文字样式 */
+        .card.selected .card-title {
+            color: #ffeb3b;
+            text-shadow: 0 0 10px rgba(255, 235, 59, 0.7);
+        }
+        
+        /* 选中卡片添加链接样式 */
+        .card.selected .card-title a {
+            color: #ffeb3b;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        
+        .card.selected .card-title a:hover {
+            text-decoration: underline;
+        }
+        
+        /* 未选中卡片变暗 */
+        .cards-container.has-selected .card:not(.selected) {
+            opacity: 0.4;
+            filter: blur(2px);
+        }
+        
+        .instructions {
+            color: white;
+            margin-top: 40px;
+            font-size: 1.1rem;
+            max-width: 600px;
+            line-height: 1.6;
+            text-align: center;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+        }
+    </style>
+</head>
+<body>
+    <div class="stars-container" id="starsContainer"></div>
+    
+    <div class="card-game-container">
+            
+        <div class="cards-container" id="cardsContainer">
+            <div class="card" data-index="0">
+                <div class="card-icon">🔐</div>
+                <div class="card-title">登录</div>
+            </div>
+            <div class="card" data-index="1">
+                <div class="card-icon">❤️</div>
+                <div class="card-title">爱心</div>
+            </div>
+            <div class="card" data-index="2">
+                <div class="card-icon">🎵</div>
+                <div class="card-title">网易云音乐</div>
+            </div>
+            <div class="card" data-index="3">
+                <div class="card-icon">📱</div>
+                <div class="card-title">抖音</div>
+            </div>
+            <div class="card" data-index="4">
+                <div class="card-icon">🎬</div>
+                <div class="card-title">快手</div>
+            </div>
+        </div>
+        </div>
+
+    <script>
+        // 卡片数据 - 包含标题和链接
+        const cardData = [
+            { title: "登录", link: "登录1.html" }, // 本地文件
+            { title: "爱心", link: "登录2.html" }, // 本地文件
+            { title: "网易云音乐", link: "https://music.163.com" },
+            { title: "抖音", link: "https://www.douyin.com/user/self?from_tab_name=main&showTab=post" },
+            { title: "快手", link: "https://www.kuaishou.com/profile/3xshapk8zhsdrx4?source=NewReco" }
+        ];
+
+        // 创建星空背景
+        function createStars() {
+            const container = document.getElementById('starsContainer');
+            const starCount = 200; // 星星数量
+            
+            // 创建普通星星
+            for (let i = 0; i < starCount; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                
+                // 随机属性
+                const size = Math.random() * 3;
+                const x = Math.random() * 100;
+                const y = Math.random() * 100;
+                const duration = Math.random() * 3 + 1 + 's';
+                
+                star.style.cssText = `
+                    width: ${size}px;
+                    height: ${size}px;
+                    left: ${x}%;
+                    top: ${y}%;
+                    --duration: ${duration};
+                    box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+                `;
+                
+                container.appendChild(star);
+            }
+
+            // 创建流星（每3秒创建一个）
+            setInterval(() => {
+                const meteor = document.createElement('div');
+                meteor.className = 'meteor';
+                meteor.style.top = Math.random() * 50 + '%';
+                meteor.style.left = Math.random() * 50 + '%';
+                container.appendChild(meteor);
+                
+                setTimeout(() => meteor.remove(), 2000);
+            }, 3000);
+        }
+
+        // 卡片抽卡功能
+        document.addEventListener('DOMContentLoaded', function() {
+            const cardsContainer = document.getElementById('cardsContainer');
+            const cards = document.querySelectorAll('.card');
+            
+            // 设置卡片的初始位置和旋转角度
+            function setupCards() {
+                cards.forEach((card, index) => {
+                    // 计算每张卡片的偏移量和旋转角度
+                    const offset = (index - (cards.length - 1) / 2) * 160; // 水平偏移
+                    const rotation = (index - (cards.length - 1) / 2) * 15; // 旋转角度
+                    
+                    // 设置CSS变量
+                    card.style.setProperty('--offset', `${offset}px`);
+                    card.style.setProperty('--rotation', `${rotation}deg`);
+                });
+            }
+            
+            // 初始化卡片位置
+            setupCards();
+            
+            // 为每张卡片添加点击事件
+            cards.forEach(card => {
+                card.addEventListener('click', function() {
+                    const cardIndex = parseInt(this.dataset.index);
+                    
+                    // 如果已经选中了这张卡片，则取消选中
+                    if (this.classList.contains('selected')) {
+                        this.classList.remove('selected');
+                        cardsContainer.classList.remove('has-selected');
+                        // 移除超链接
+                        removeLinkFromCard(this);
+                    } else {
+                        // 移除其他卡片的选中状态
+                        cards.forEach(c => {
+                            c.classList.remove('selected');
+                            removeLinkFromCard(c);
+                        });
+                        
+                        // 选中当前卡片
+                        this.classList.add('selected');
+                        cardsContainer.classList.add('has-selected');
+                        // 添加超链接
+                        addLinkToCard(this, cardIndex);
+                    }
+                });
+            });
+            
+            // 点击容器空白处取消选中
+            cardsContainer.addEventListener('click', function(e) {
+                if (e.target === cardsContainer) {
+                    cards.forEach(card => {
+                        card.classList.remove('selected');
+                        removeLinkFromCard(card);
+                    });
+                    cardsContainer.classList.remove('has-selected');
+                }
+            });
+            
+            // 为卡片添加超链接
+            function addLinkToCard(card, index) {
+                const titleElement = card.querySelector('.card-title');
+                const originalText = titleElement.textContent;
+                const link = cardData[index].link;
+                titleElement.innerHTML = `<a href="${link}" target="${index < 2 ? '_self' : '_blank'}">${originalText}</a>`;
+            }
+            
+            // 移除卡片超链接
+            function removeLinkFromCard(card) {
+                const titleElement = card.querySelector('.card-title');
+                const linkElement = titleElement.querySelector('a');
+                if (linkElement) {
+                    titleElement.textContent = linkElement.textContent;
+                }
+            }
+        });
+
+        // 页面加载完成后创建星星
+        window.onload = createStars;
+    </script>
+</body>
+</html>
