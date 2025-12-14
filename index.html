@@ -2,8 +2,9 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>罗清宇和田蓉蓉</title>
+    <!-- 优化视口设置：添加user-scalable=no防止用户缩放，提升移动端体验 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>z_c恋爱日记</title>
     <style>
         /* 重置默认样式 */
         * {
@@ -23,14 +24,17 @@
             height: 100%;
             position: relative; /* 作为子元素定位的参考 */
         }
-        /* 视频背景样式 - 新增部分 */
+        /* 视频背景样式 - 优化：强制视频铺满，避免移动端黑边 */
         .bg-video {
             position: fixed; /* 固定在视口，随滚动不移动 */
-            top: 0;
-            left: 0;
-            min-width: 100%; /* 保证视频宽度铺满屏幕 */
-            min-height: 100%; /* 保证视频高度铺满屏幕 */
-            z-index: -1; /* 把视频放在最底层，让文字和图标在上面 */
+            top: 50%;
+            left: 50%;
+            min-width: 100%;
+            min-height: 100%;
+            width: auto;
+            height: auto;
+            z-index: -1;
+            transform: translate(-50%, -50%); /* 更精准的居中，解决移动端黑边 */
             object-fit: cover; /* 视频内容等比例缩放，铺满容器且不拉伸 */
         }
         /* 文字区域（对应原图的灰色条） */
@@ -50,12 +54,17 @@
             color: #fff;
             font-family: "微软雅黑", sans-serif;
             text-decoration: none; /* 去掉超链接默认的下划线 */
-            /* 可选：添加鼠标悬浮效果 */
-            transition: color 0.3s ease;
+            /* 优化：增加点击区域大小（移动端触摸更友好） */
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 8px; /* 轻微圆角，提升视觉效果 */
+            transition: color 0.3s ease, background-color 0.3s ease; /* 新增背景过渡 */
         }
-        /* 鼠标悬浮时的文字颜色变化（可选） */
-        .text-bar a:hover {
-            color: #ffd700; /* 金色，可自行修改 */
+        /* 鼠标悬浮/触摸时的效果（优化移动端体验） */
+        .text-bar a:hover,
+        .text-bar a:active { /* active适配移动端触摸 */
+            color: #ffd700; /* 金色 */
+            background-color: rgba(0, 0, 0, 0.5); /* 加深背景，提升反馈 */
         }
         /* 右下角小猪图标 */
         .pig-icon {
@@ -64,25 +73,55 @@
             right: 20px;
             width: 60px; /* 图标大小 */
             z-index: 1; /* 确保图标在最上层 */
+            /* 优化：添加轻微圆角，适配移动端视觉 */
+            border-radius: 50%;
+        }
+
+        /* ========== 核心：移动端媒体查询适配 ========== */
+        /* 针对屏幕宽度小于768px的移动设备（手机） */
+        @media (max-width: 768px) {
+            /* 缩小文字大小，适配手机屏幕 */
+            .text-bar a {
+                font-size: 20px; /* 从28px改为20px，更适合手机 */
+                padding: 10px 20px; /* 增大点击区域，触摸更方便 */
+            }
+            /* 缩小小猪图标，适配手机屏幕 */
+            .pig-icon {
+                width: 40px; /* 从60px改为40px */
+                bottom: 15px; /* 减小底部间距 */
+                right: 15px; /* 减小右侧间距 */
+            }
+            /* 优化文字栏的内边距，适配手机 */
+            .text-bar {
+                padding: 8px 0;
+            }
+        }
+
+        /* 针对更小的屏幕（如小屏手机，宽度小于480px） */
+        @media (max-width: 480px) {
+            .text-bar a {
+                font-size: 18px; /* 进一步缩小文字 */
+            }
+            .pig-icon {
+                width: 35px; /* 进一步缩小图标 */
+            }
         }
     </style>
 </head>
 <body>
     <div class="page-container">
-        <!-- 视频背景 - 新增的视频标签 -->
-        <video class="bg-video" autoplay loop muted playsinline>
+        <!-- 视频背景 - 优化：添加preload="auto"提升移动端加载速度（可选） -->
+        <video class="bg-video" autoplay loop muted playsinline preload="auto">
             <source src="777.mp4" type="video/mp4">
             <!-- 浏览器不支持视频时显示的文字 -->
             你的浏览器不支持HTML5视频播放，请升级浏览器！
         </video>
-        <!-- 文字区域（修改：将span换成a标签，添加超链接到home.html） -->
+        <!-- 文字区域 -->
         <div class="text-bar">
             <a href="3.html">z_c恋爱日记</a>
         </div>
-        <!-- 右下角小猪图标 - 路径改为zhu.png -->
+        <!-- 右下角小猪图标 -->
         <img src="zhu.png" class="pig-icon" alt="小猪图标">
     </div>
 </body>
 </html>
-
-
