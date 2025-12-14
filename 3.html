@@ -2,9 +2,12 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- 优化视口设置：添加user-scalable=no防止缩放，提升移动端体验 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>甜蜜主页 💕 - 我们的二人世界</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <!-- 引入ScrollTrigger插件（GSAP滚动动画需要） -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
     <style>
         /* 0. CSS 重置与基础设定 */
         *,
@@ -21,6 +24,8 @@
             color: #333;
             background-color: #FFF5FA; /* 淡雅的背景色 */
             overflow-x: hidden; /* 防止水平滚动 */
+            /* 移动端优化：增加页面底部内边距，避免内容被遮挡 */
+            padding-bottom: 20px;
         }
  
         /* 1. 响应式排版与容器 */
@@ -40,12 +45,16 @@
         p {
             margin-bottom: 1em;
             color: #555;
+            /* 移动端优化：增加行高，提升可读性 */
+            line-height: 1.7;
         }
  
         img {
             max-width: 100%;
             height: auto;
             border-radius: 8px;
+            /* 移动端优化：添加轻微阴影，提升视觉层次 */
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
  
         /* 2. 导航栏  Navbar 🎨 */
@@ -57,6 +66,10 @@
             top: 0;
             z-index: 1000;
             transition: background-color 0.3s ease;
+            /* 移动端优化：导航栏高度适配 */
+            min-height: 70px;
+            display: flex;
+            align-items: center;
         }
  
         .navbar .container {
@@ -65,6 +78,8 @@
             align-items: center;
             padding-top: 0;
             padding-bottom: 0;
+            /* 移动端优化：确保容器占满宽度 */
+            width: 92%;
         }
  
         .logo {
@@ -73,6 +88,8 @@
             color: #fff;
             text-decoration: none;
             animation: fadeInDown 1s ease-out;
+            /* 移动端优化：缩小logo字体 */
+            font-size: 1.5em;
         }
  
         .nav-links {
@@ -104,6 +121,10 @@
             padding: 0.5em 0.8em;
             border-radius: 5px;
             transition: background-color 0.3s ease, transform 0.2s ease;
+            /* 移动端优化：增大点击区域 */
+            display: inline-block;
+            min-width: 80px;
+            text-align: center;
         }
  
         .nav-links a:hover, .nav-links a.active {
@@ -119,6 +140,13 @@
             background: none;
             border: none;
             cursor: pointer;
+            /* 移动端优化：增大按钮点击区域 */
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1001;
         }
  
  
@@ -132,6 +160,11 @@
             padding: 80px 20px;
             position: relative;
             overflow: hidden; /* For pseudo-element overlay */
+            /* 移动端优化：调整内边距，适配屏幕高度 */
+            min-height: 60vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
  
         .hero::before { /* 添加一层蒙版让文字更清晰 */
@@ -148,6 +181,9 @@
         .hero-content {
             position: relative; /* 高于蒙版 */
             z-index: 2;
+            /* 移动端优化：限制内容宽度，提升可读性 */
+            max-width: 90%;
+            margin: 0 auto;
         }
  
         .hero h1 {
@@ -176,8 +212,11 @@
             transition: background-color 0.3s ease, transform 0.3s ease;
             border: 2px solid transparent;
             box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            /* 移动端优化：增大点击区域，添加触摸反馈 */
+            display: inline-block;
+            min-width: 180px;
         }
-        .hero-buttons .btn:hover {
+        .hero-buttons .btn:hover, .hero-buttons .btn:active {
             background-color: #FF1493; /* 深一点的粉色 */
             transform: translateY(-3px) scale(1.05);
             box-shadow: 0 6px 20px rgba(0,0,0,0.3);
@@ -186,7 +225,7 @@
             background-color: transparent;
             border: 2px solid #fff;
         }
-        .hero-buttons .btn-secondary:hover {
+        .hero-buttons .btn-secondary:hover, .hero-buttons .btn-secondary:active {
             background-color: rgba(255,255,255,0.2);
         }
  
@@ -195,6 +234,8 @@
         .our-story {
             padding: 60px 0;
             background-color: #FFFFFF; /* 白色背景，突出内容 */
+            /* 移动端优化：调整上下内边距 */
+            padding: 40px 0;
         }
         .our-story .container {
             text-align: center;
@@ -207,12 +248,17 @@
             max-width: 700px;
             margin: 0 auto 30px auto;
             color: #4A4A4A;
+            /* 移动端优化：调整字体大小和间距 */
+            padding: 0 10px;
         }
         .story-timeline {
             display: flex;
             justify-content: space-around;
             flex-wrap: wrap;
             gap: 20px; /* 间隙 */
+            /* 移动端优化：调整间隙 */
+            gap: 15px;
+            padding: 0 10px;
         }
         .timeline-item {
             background: #FFF0F5; /* 淡紫色背景 */
@@ -222,8 +268,10 @@
             width: calc(33.333% - 20px); /* 减去部分间隙 */
             text-align: left;
             transition: transform 0.3s ease, box-shadow 0.3s ease;
+            /* 移动端优化：添加触摸反馈 */
+            cursor: pointer;
         }
-        .timeline-item:hover {
+        .timeline-item:hover, .timeline-item:active {
             transform: translateY(-8px);
             box-shadow: 0 8px 25px rgba(233, 30, 99, 0.2);
         }
@@ -248,6 +296,8 @@
         .sweet-moments {
             padding: 60px 0;
             background-color: #FFE4E1; /* Misty Rose */
+            /* 移动端优化：调整上下内边距 */
+            padding: 40px 0;
         }
         .sweet-moments .container {
             text-align: center;
@@ -261,6 +311,9 @@
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 25px;
             margin-top: 30px;
+            /* 移动端优化：调整网格间隙和内边距 */
+            gap: 15px;
+            padding: 0 10px;
         }
         .moment-card {
             background: #fff;
@@ -268,8 +321,10 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
             overflow: hidden;
             transition: transform 0.3s ease, box-shadow 0.3s ease;
+            /* 移动端优化：添加触摸反馈 */
+            cursor: pointer;
         }
-        .moment-card:hover {
+        .moment-card:hover, .moment-card:active {
             transform: scale(1.05);
             box-shadow: 0 8px 20px rgba(0,0,0,0.15);
         }
@@ -278,6 +333,8 @@
             height: 220px;
             object-fit: cover;
             display: block;
+            /* 移动端优化：调整图片高度，适配屏幕 */
+            height: 180px;
         }
         .moment-card-caption {
             padding: 15px;
@@ -295,8 +352,11 @@
             font-size: 1.1em;
             margin-top: 30px;
             transition: background-color 0.3s ease, transform 0.2s ease;
+            /* 移动端优化：增大点击区域，添加触摸反馈 */
+            min-width: 200px;
+            text-align: center;
         }
-        .cta-button:hover {
+        .cta-button:hover, .cta-button:active {
             background-color: #FF1493;
             transform: translateY(-2px);
         }
@@ -305,6 +365,8 @@
         .future-wishes {
             padding: 60px 0;
             background-color: #F0F8FF; /* AliceBlue */
+            /* 移动端优化：调整上下内边距 */
+            padding: 40px 0;
         }
         .future-wishes .container {
             text-align: center;
@@ -321,15 +383,24 @@
             gap: 30px;
             margin-top: 30px;
             text-align: left;
+            /* 移动端优化：调整间隙和内边距 */
+            gap: 20px;
+            padding: 0 10px;
         }
         .wish-item {
             background: white;
             padding: 25px;
             border-radius: 10px;
             box-shadow: 0 5px 15px rgba(70, 130, 180, 0.1); /* SteelBlue shadow */
-            width: calc(50% - 40px); /* Adjust width for two items per row, considering gap */
+            width: calc(50% - 40px); /* Adjust width for two items per row， considering gap */
             min-width: 280px; /* Minimum width before wrapping */
             border-left: 5px solid #5D9CEC; /* Nice blue accent */
+            /* 移动端优化：添加触摸反馈 */
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+        .wish-item:hover, .wish-item:active {
+            transform: translateY(-5px);
         }
         .wish-item h3 {
             font-size: 1.6em;
@@ -350,45 +421,74 @@
             text-align: center;
             padding: 30px 0;
             font-size: 0.95em;
+            /* 移动端优化：调整内边距，添加顶部间距 */
+            padding: 20px 0;
+            margin-top: 20px;
         }
         .site-footer p {
             margin-bottom: 0.5em;
             color: #E0E0E0;
+            /* 移动端优化：调整字体大小 */
+            font-size: 0.9em;
+            padding: 0 10px;
         }
         .site-footer a {
             color: #FFB6C1; /* LightPink */
             text-decoration: none;
+            /* 移动端优化：增大点击区域 */
+            display: inline-block;
+            padding: 5px 10px;
         }
-        .site-footer a:hover {
+        .site-footer a:hover, .site-footer a:active {
             text-decoration: underline;
         }
  
         /* 8. 响应式设计 Media Queries 📱💻 */
+        /* 平板设备 */
         @media (max-width: 992px) {
             .timeline-item {
                 width: calc(50% - 15px); /* 两列布局 */
+                /* 移动端优化：调整内边距 */
+                padding: 20px;
             }
             .wish-item {
                 width: calc(50% - 25px);
+                /* 移动端优化：调整内边距 */
+                padding: 20px;
+            }
+            /* 优化英雄区域标题 */
+            .hero h1 {
+                font-size: 3em;
             }
         }
  
+        /* 手机设备（768px以下） */
         @media (max-width: 768px) {
+            /* 英雄区域优化 */
+            .hero {
+                padding: 60px 10px;
+                min-height: 50vh;
+            }
             .hero h1 {
                 font-size: 2.8em;
             }
             .hero .subtitle {
                 font-size: 1.2em;
             }
+            /* 导航栏优化 */
             .nav-links {
                 display: none; /* 隐藏链接 */
                 flex-direction: column;
                 width: 100%;
-                position: absolute;
-                top: 70px; /* 根据navbar高度调整 */
+                position: fixed; /* 改为fixed，防止滚动时错位 */
+                top: 0; /* 从顶部开始 */
                 left: 0;
                 background: linear-gradient(135deg, #FB607F 0%, #FF8FAB 100%);
-                padding: 10px 0;
+                padding: 80px 0 20px 0; /* 留出logo空间 */
+                min-height: 100vh; /* 占满屏幕高度 */
+                justify-content: center;
+                gap: 20px; /* 增加链接间距 */
+                box-shadow: 0 5px 10px rgba(0,0,0,0.1);
             }
             .nav-links.active {
                 display: flex; /* 点击后显示 */
@@ -398,48 +498,93 @@
                 text-align: center;
                 animation: none; /* 移除桌面端的动画 */
             }
-            .menu-toggle {
-                display: block; /* 显示汉堡菜单按钮 */
+            .nav-links a {
+                font-size: 1.2em; /* 增大移动端链接字体 */
+                padding: 10px 20px; /* 增大内边距 */
+                min-width: 120px;
             }
- 
+            .menu-toggle {
+                display: flex; /* 显示汉堡菜单按钮 */
+            }
+            /* 时间轴项改为单列 */
             .timeline-item {
-                width: calc(100% - 10px); /* 单列布局 */
+                width: 100%; /* 单列布局 */
+                margin-bottom: 10px;
             }
             .story-timeline {
                 gap: 15px;
             }
- 
+            /* 相册网格优化 */
             .gallery-teaser {
                 grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
                 gap: 15px;
             }
+            .moment-card img {
+                height: 160px; /* 进一步缩小图片高度 */
+            }
+            /* 未来期许项改为单列 */
             .wish-item {
                 width: 100%;
+                margin-bottom: 10px;
             }
             .wishes-list {
                 gap: 20px;
             }
+            /* 标题字体优化 */
+            .our-story h2, .sweet-moments h2, .future-wishes h2 {
+                font-size: 2.2em;
+                padding: 0 10px;
+            }
+            .story-intro {
+                font-size: 1.1em;
+            }
         }
         
+        /* 小屏手机（480px以下） */
         @media (max-width: 480px) {
+            /* 英雄区域进一步优化 */
+            .hero {
+                min-height: 45vh;
+            }
             .hero h1 {
                 font-size: 2.2em;
             }
             .hero .subtitle {
                 font-size: 1em;
             }
-            .hero-buttons .btn {
-                padding: 10px 20px;
-                font-size: 1em;
-                margin: 5px;
-            }
+            /* 英雄按钮改为垂直排列 */
             .hero-buttons {
                 display: flex;
                 flex-direction: column;
                 align-items: center;
+                gap: 15px; /* 增加按钮间距 */
             }
-             .our-story h2, .sweet-moments h2, .future-wishes h2 {
-                font-size: 2.2em;
+            .hero-buttons .btn {
+                padding: 10px 20px;
+                font-size: 1em;
+                margin: 5px;
+                min-width: 100%; /* 按钮占满宽度 */
+                max-width: 280px;
+            }
+            /* 标题字体进一步缩小 */
+            .our-story h2, .sweet-moments h2, .future-wishes h2 {
+                font-size: 1.8em;
+            }
+            /* 卡片内边距优化 */
+            .timeline-item, .wish-item {
+                padding: 15px;
+            }
+            /* 相册图片高度进一步缩小 */
+            .moment-card img {
+                height: 140px;
+            }
+            /* Logo字体缩小 */
+            .logo {
+                font-size: 1.3em;
+            }
+            /* 回到顶部链接优化 */
+            .site-footer a {
+                font-size: 0.9em;
             }
         }
         
@@ -457,7 +602,10 @@
             transform: translateY(-30px) rotateX(90deg) scale(0.5);
         }
  
- 
+        /* 补充：回到顶部平滑滚动优化 */
+        html {
+            scroll-behavior: smooth;
+        }
     </style>
 </head>
 <body>
@@ -511,24 +659,24 @@
  
     <section id="sweet-moments" class="sweet-moments">
         <div class="container">
-            <h2 class="gsap-reveal">📸</h2>
+            <h2 class="gsap-reveal">📸 甜蜜瞬间</h2> <!-- 补充标题文字，提升可读性 -->
             <p class="story-intro gsap-reveal">生活中的小确幸，都是我们爱情的见证。🖼️</p>
             <div class="gallery-teaser">
                 <div class="moment-card gsap-reveal">
                     <img src="1.jpg" alt="幸福瞬间1">
-                    <p class="moment-card-caption">🌅</p>
+                    <p class="moment-card-caption">🌅 日落相伴</p> <!-- 补充描述，提升体验 -->
                 </div>
                 <div class="moment-card gsap-reveal">
                     <img src="2.jpg" alt="幸福瞬间2">
-                    <p class="moment-card-caption">✈️</p>
+                    <p class="moment-card-caption">✈️ 一起旅行</p>
                 </div>
                 <div class="moment-card gsap-reveal">
                     <img src="6.jpg" alt="幸福瞬间3">
-                    <p class="moment-card-caption">🍲</p>
+                    <p class="moment-card-caption">🍲 美食共享</p>
                 </div>
                  <div class="moment-card gsap-reveal">
-                    <img src="4.jpg" alt="幸福瞬间3">
-                    <p class="moment-card-caption">🍲</p>
+                    <img src="4.jpg" alt="幸福瞬间4">
+                    <p class="moment-card-caption">🍲 温馨晚餐</p>
                 </div>
             </div>
             <a href="#" class="cta-button gsap-reveal">查看完整相册 🖼️➡️</a>
@@ -546,11 +694,11 @@
                 </div>
                 <div class="wish-item gsap-reveal">
                     <h3>环游世界 🌍</h3>
-                    <p>——————————————————</p>
+                    <p>一起走过山川湖海，记录每一个美好的旅行瞬间，把世界的美好都藏进我们的回忆里。</p> <!-- 补充内容，提升体验 -->
                 </div>
                 <div class="wish-item gsap-reveal">
                     <h3>温馨小家 🏠💖</h3>
-                    <p>祝我们长长久久</p>
+                    <p>祝我们长长久久，打造一个充满爱的温馨小家，一屋两人，三餐四季，简单而幸福。</p>
                 </div>
                  <div class="wish-item gsap-reveal">
                     <h3>健康快乐 😊💪</h3>
@@ -565,12 +713,15 @@
         <div class="container">
             <p>用 ❤️ 构建 | [lqy] & [trr ] 2025</p>
             <p>所有瞬间，只因有你 ✨</p>
-            <p><a href="#">回到顶部 ↑</a></p>
+            <p><a href="#" id="backToTop">回到顶部 ↑</a></p>
         </div>
     </footer>
  
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // 注册GSAP的ScrollTrigger插件
+            gsap.registerPlugin(ScrollTrigger);
+            
             // GSAP 动画
             const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
  
@@ -611,8 +762,7 @@
                 "-=0.4"
             );
  
-            // 4. Section elements reveal on scroll (or load if not implementing ScrollTrigger yet)
-            // For simplicity, this will animate all at once after hero, can be enhanced with ScrollTrigger
+            // 4. Section elements reveal on scroll with ScrollTrigger
             gsap.utils.toArray('.gsap-reveal').forEach((elem, i) => {
                 gsap.fromTo(elem, 
                     { opacity: 0, y: 50 }, 
@@ -620,12 +770,12 @@
                         opacity: 1, 
                         y: 0, 
                         duration: 0.8, 
-                        delay: i * 0.1 + tl.duration() - 0.5, // Stagger based on element index and hero animation duration
-                        scrollTrigger: { // Basic ScrollTrigger example
+                        delay: i * 0.1, // Stagger based on element index
+                        scrollTrigger: { 
                             trigger: elem,
                             start: "top 85%", // When the top of the element is 85% from the top of the viewport
-                            toggleActions: "play none none none", // Play animation once when it enters viewport
-                            // markers: true, // For debugging
+                            toggleActions: "play none none reverse", // 离开时反向动画，提升体验
+                            // markers: true, // 调试时可开启
                         }
                     }
                 );
@@ -638,48 +788,50 @@
             if (menuToggle && navLinks) {
                 menuToggle.addEventListener('click', () => {
                     navLinks.classList.toggle('active');
-                    // Optional: Change hamburger icon to X
-                    if (navLinks.classList.contains('active')) {
-                        menuToggle.innerHTML = '✕'; 
-                    } else {
-                        menuToggle.innerHTML = '☰';
-                    }
+                    // 切换汉堡/关闭图标
+                    menuToggle.innerHTML = navLinks.classList.contains('active') ? '✕' : '☰';
+                    // 移动端：点击菜单时禁止/允许页面滚动
+                    document.body.style.overflow = navLinks.classList.contains('active') ? 'hidden' : 'auto';
                 });
             }
  
-            // Smooth scroll for anchor links in navbar
-            document.querySelectorAll('.nav-links a[href^="#"]').forEach(anchor => {
+            // Smooth scroll for anchor links (所有锚点链接)
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
                 anchor.addEventListener('click', function (e) {
                     e.preventDefault();
                     const targetId = this.getAttribute('href');
-                    const targetElement = document.querySelector(targetId);
-                    if (targetElement) {
-                        targetElement.scrollIntoView({
+                    // 处理回到顶部的情况
+                    if (targetId === '#') {
+                        window.scrollTo({
+                            top: 0,
                             behavior: 'smooth'
                         });
-                        // If mobile nav is open, close it after clicking a link
-                        if (navLinks.classList.contains('active')) {
-                           navLinks.classList.remove('active');
-                           menuToggle.innerHTML = '☰';
+                    } else {
+                        const targetElement = document.querySelector(targetId);
+                        if (targetElement) {
+                            targetElement.scrollIntoView({
+                                behavior: 'smooth',
+                                block: 'start' // 对齐到顶部
+                            });
                         }
                     }
-                });
-            });
-             // Smooth scroll for hero buttons
-            document.querySelectorAll('.hero-buttons a[href^="#"]').forEach(anchor => {
-                anchor.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    const targetId = this.getAttribute('href');
-                    const targetElement = document.querySelector(targetId);
-                    if (targetElement) {
-                        targetElement.scrollIntoView({
-                            behavior: 'smooth'
-                        });
+                    // 移动端：点击链接后关闭导航菜单
+                    if (navLinks && navLinks.classList.contains('active')) {
+                       navLinks.classList.remove('active');
+                       menuToggle.innerHTML = '☰';
+                       document.body.style.overflow = 'auto'; // 恢复滚动
                     }
                 });
             });
  
- 
+            // 补充：回到顶部按钮的显示/隐藏（可选，提升体验）
+            const backToTop = document.getElementById('backToTop');
+            window.addEventListener('scroll', () => {
+                if (backToTop) {
+                    backToTop.style.opacity = window.scrollY > 300 ? '1' : '0.5';
+                    backToTop.style.pointerEvents = window.scrollY > 300 ? 'auto' : 'none';
+                }
+            });
         });
     </script>
  
