@@ -219,7 +219,6 @@
 
     <div id="editor-modal">
         <div id="editor-container">
-            <h2>星云数据库编辑器</h2>
             <p style="color:#888; font-size:clamp(10px,2.5vw,12px); margin-bottom:10px;">每行一段文字，星云将随机抽取生成。</p>
             <textarea id="text-input"></textarea>
             <div class="btn-group">
@@ -1066,27 +1065,7 @@
         }
 
         function initGUI() {
-            try {
-                const gui = new GUI({ title: '星云控制台' });
-                const folderGalaxy = gui.addFolder('星云动态');
-                folderGalaxy.add(params, 'count', 50, 600, 10).name('碎片数量').onFinishChange(initPopups);
-                folderGalaxy.add(params, 'cardBaseSize', 0.5, 3.0, 0.1).name('卡片基础大小'); 
-                folderGalaxy.add(params, 'rotationSpeed', 0, 0.05, 0.001).name('旋转速度');
-                folderGalaxy.add(params, 'floatSpeed', 0.1, 2.0, 0.1).name('漂浮速度');
-                const folderVisuals = gui.addFolder('视觉光效');
-                folderVisuals.add(params, 'bloomStrength', 0, 3, 0.1).name('辉光强度');
-                folderVisuals.add(params, 'bloomRadius', 0, 1.5, 0.1).name('辉光半径');
-                folderVisuals.add(params, 'bloomThreshold', 0, 1, 0.05).name('辉光阈值');
-                const folderInteract = gui.addFolder('交互体验');
-                // 替换原zoomScale为屏幕比例参数，支持GUI调节
-                folderInteract.add(params, 'zoomScaleRatio', 0.6, 0.95, 0.05).name('放大占屏比例');
-                folderInteract.add(params, 'dissolveTime', 1.0, 8.0, 0.5).name('爆炸耗时(秒)');
-                // 鼠标/触摸控制灵敏度调节
-                const folderMouse = gui.addFolder('鼠标/触摸控制');
-                folderMouse.add(params, 'mouseSensitivity', 0.001, 0.01, 0.001).name('拖动灵敏度');
-                folderMouse.add(params, 'wheelSensitivity', 1, 10, 1).name('滚轮灵敏度');
-                folderMouse.add(params, 'touchZoomSensitivity', 0.02, 0.2, 0.02).name('双指缩放灵敏度');
-            } catch (e) { console.warn("GUI load failed"); }
+            
         }
 
         function animate() {
