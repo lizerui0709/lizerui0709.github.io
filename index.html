@@ -2,7 +2,11 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- 移动端视口核心适配：禁止缩放、占满屏幕、设置理想视口 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="format-detection" content="telephone=no">
     <title>Soul Nebula: 自由音乐版</title>
     <style>
         /* --- 基础设定 --- */
@@ -11,10 +15,12 @@
             background-color: #02020a; 
             font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif; 
             user-select: none;
-            cursor: grab; /* 拖动光标 */
+            cursor: grab; /* 拖动光标-桌面 */
+            touch-action: none; /* 禁止浏览器默认触摸行为（滚动/缩放），核心！ */
         }
-        body.dragging { cursor: grabbing; } /* 拖动中光标 */
-        canvas { display: block; }
+        body.dragging { cursor: grabbing; } /* 拖动中光标-桌面 */
+        body.zoom-pause { cursor: default; } /* 放大停留时光标-桌面 */
+        canvas { display: block; width: 100vw; height: 100vh; } /* 画布占满视口-移动端核心 */
         
         /* 原始视频源隐藏（直接删除也可，保留避免报错） */
         #input_video { display: none; }
@@ -22,12 +28,14 @@
         /* 隐藏的文件输入框 */
         #music-upload { display: none; }
 
-        /* --- UI 容器 --- */
+        /* --- UI 容器 移动端自适应 --- */
         #hud {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             pointer-events: none;
             display: flex; flex-direction: column; justify-content: space-between;
-            padding: 30px; box-sizing: border-box;
+            /* 移动端内边距自适应，替换固定30px为百分比+固定值 */
+            padding: clamp(15px, 4vw, 30px); 
+            box-sizing: border-box;
             z-index: 10;
             transition: opacity 0.5s;
         }
@@ -40,37 +48,53 @@
         }
 
         h1 { 
-            margin: 0; color: #fff; font-size: 24px; font-weight: 300; 
-            letter-spacing: 6px; text-transform: uppercase; 
+            margin: 0; color: #fff; 
+            /* 字体大小自适应：移动端小，桌面端大 */
+            font-size: clamp(18px, 5vw, 24px); 
+            font-weight: 300; 
+            letter-spacing: clamp(3px, 1.5vw, 6px); 
+            text-transform: uppercase; 
             text-shadow: 0 0 30px rgba(100, 150, 255, 0.6);
         }
         .sub-text { 
-            font-size: 14px; color: #b0cfff; margin-top: 12px; 
-            letter-spacing: 2px; opacity: 0.85; font-weight: 400;
+            /* 副标题字体/间距自适应 */
+            font-size: clamp(12px, 3vw, 14px); 
+            color: #b0cfff; margin-top: clamp(8px, 2vw, 12px); 
+            letter-spacing: clamp(1px, 0.5vw, 2px); 
+            opacity: 0.85; font-weight: 400;
+            line-height: 1.5; /* 移动端增加行高，避免文字重叠 */
         }
-        .highlight { color: #00ffea; font-weight: bold; margin: 0 5px; text-shadow: 0 0 10px #00ffea80;}
+        .highlight { color: #00ffea; font-weight: bold; margin: 0 2px; text-shadow: 0 0 10px #00ffea80;}
 
-        /* 按钮组 */
+        /* 按钮组 移动端自适应 */
         .controls-row {
-            margin-top: 15px;
+            margin-top: clamp(10px, 2.5vw, 15px);
             display: flex;
-            gap: 15px;
+            gap: clamp(10px, 2.5vw, 15px);
             pointer-events: auto;
+            flex-wrap: wrap; /* 移动端屏幕窄时按钮自动换行 */
         }
 
         .hud-btn {
             background: rgba(255, 255, 255, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.3);
             color: #fff;
-            padding: 8px 16px;
+            /* 按钮内边距/字体自适应 */
+            padding: clamp(6px, 2vw, 8px) clamp(12px, 3vw, 16px);
             cursor: pointer;
-            font-size: 12px;
-            letter-spacing: 2px;
+            font-size: clamp(10px, 2.2vw, 12px);
+            letter-spacing: clamp(1px, 0.5vw, 2px);
             transition: 0.3s;
             text-transform: uppercase;
             backdrop-filter: blur(5px);
+            border-radius: 4px; /* 移动端增加圆角，更贴合设计 */
+            flex-shrink: 0; /* 防止按钮被挤压 */
         }
-        .hud-btn:hover { background: rgba(0, 255, 234, 0.2); border-color: #00ffea; color: #00ffea; }
+        .hud-btn:hover, .hud-btn.touch-hover { 
+            background: rgba(0, 255, 234, 0.2); 
+            border-color: #00ffea; 
+            color: #00ffea; 
+        }
         
         /* 音乐播放时的状态 */
         .hud-btn.playing {
@@ -82,10 +106,13 @@
         /* 移除摄像头相关的状态指示器（直接隐藏） */
         #hand-status { display: none !important; }
 
-        /* 进度条 */
+        /* 进度条 移动端居中自适应 */
         #dissolve-bar-container {
-            position: absolute; bottom: 120px; left: 50%; transform: translateX(-50%);
-            width: 200px; height: 4px; background: rgba(255,255,255,0.1);
+            position: absolute; 
+            bottom: clamp(80px, 15vw, 120px); /* 移动端上移进度条，避免被遮挡 */
+            left: 50%; transform: translateX(-50%);
+            width: clamp(150px, 40vw, 200px); /* 宽度自适应 */
+            height: 4px; background: rgba(255,255,255,0.1);
             border-radius: 2px; overflow: hidden; opacity: 0; transition: opacity 0.3s;
             z-index: 11;
         }
@@ -97,46 +124,74 @@
         /* 移除自定义手势光标（直接隐藏） */
         #cursor { display: none !important; }
 
+        /* 加载层 移动端适配 */
         #loading-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: #02020a; z-index: 999;
             display: flex; flex-direction: column; justify-content: center; align-items: center;
-            color: #fff; letter-spacing: 8px; font-size: 16px; font-weight: 300;
+            color: #fff; 
+            letter-spacing: clamp(4px, 2vw, 8px); 
+            font-size: clamp(14px, 3.5vw, 16px); 
+            font-weight: 300;
             transition: opacity 1.5s ease-out;
             pointer-events: auto; 
             cursor: pointer;
+            touch-action: none;
         }
         #loading-overlay span {
-            margin-top: 20px; font-size: 12px; opacity: 0.6; letter-spacing: 2px;
+            margin-top: clamp(15px, 4vw, 20px); 
+            font-size: clamp(10px, 2.5vw, 12px); 
+            opacity: 0.6; 
+            letter-spacing: clamp(1px, 0.5vw, 2px);
         }
 
-        /* --- 文本编辑器 Modal --- */
+        /* --- 文本编辑器 Modal 移动端全屏适配 --- */
         #editor-modal {
             display: none;
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.85);
             z-index: 200;
-            justify-content: center; align-items: center;
+            justify-content: center; align-items: flex-start; /* 移动端上对齐，避免键盘遮挡 */
+            padding-top: clamp(20px, 5vw, 30px);
             backdrop-filter: blur(10px);
             pointer-events: auto;
+            overflow-y: auto; /* 移动端允许滚动 */
         }
         #editor-container {
-            width: 600px; max-width: 90%;
+            width: clamp(280px, 90%, 600px); /* 最大600px，最小280px，适配小屏手机 */
             background: #111; border: 1px solid #333;
-            padding: 30px; box-shadow: 0 0 50px rgba(0,0,0,0.5);
+            padding: clamp(20px, 5vw, 30px); 
+            box-shadow: 0 0 50px rgba(0,0,0,0.5);
+            border-radius: 8px; /* 移动端增加圆角 */
+            margin: 0 auto;
         }
-        #editor-container h2 { color: #fff; margin-top: 0; font-weight: 300; letter-spacing: 4px; }
+        #editor-container h2 { 
+            color: #fff; margin-top: 0; font-weight: 300; 
+            letter-spacing: clamp(2px, 1vw, 4px); 
+            font-size: clamp(16px, 4vw, 20px);
+        }
         #text-input {
-            width: 100%; height: 300px;
+            width: 100%; 
+            height: clamp(200px, 40vh, 300px); /* 高度适配，占屏幕40%最大 */
             background: #050505; border: 1px solid #333;
-            color: #ccc; padding: 15px;
-            font-family: monospace; font-size: 14px; line-height: 1.5;
+            color: #ccc; padding: clamp(10px, 2.5vw, 15px);
+            font-family: monospace; 
+            font-size: clamp(12px, 3vw, 14px); 
+            line-height: 1.5;
             resize: vertical; box-sizing: border-box;
+            border-radius: 4px;
         }
-        .btn-group { margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px; }
+        .btn-group { 
+            margin-top: clamp(15px, 4vw, 20px); 
+            display: flex; justify-content: flex-end; gap: clamp(8px, 2vw, 10px); 
+        }
         .modal-btn {
-            padding: 10px 25px; border: none; cursor: pointer;
+            /* 弹窗按钮适配 */
+            padding: clamp(8px, 2.5vw, 10px) clamp(20px, 5vw, 25px); 
+            border: none; cursor: pointer;
             font-weight: bold; letter-spacing: 1px;
+            border-radius: 4px;
+            font-size: clamp(12px, 3vw, 14px);
         }
         .btn-save { background: #00ffea; color: #000; }
         .btn-cancel { background: transparent; color: #fff; border: 1px solid #555; }
@@ -146,7 +201,8 @@
 
         @keyframes fadeIn { from { opacity: 0; transform: scaleX(-1) translateY(20px); } to { opacity: 1; transform: scaleX(-1) translateY(0); } }
 
-        .lil-gui { --width: 280px; transition: opacity 0.5s; }
+        /* lil-gui 移动端自适应宽度 */
+        .lil-gui { --width: clamp(220px, 60vw, 280px); transition: opacity 0.5s; }
     </style>
 </head>
 <body>
@@ -156,25 +212,21 @@
     
     <input type="file" id="music-upload" accept="audio/*">
 
-    <div id="loading-overlay" onclick="startExperience()">
-        <div>点击任意处启动系统</div>
+    <div id="loading-overlay" onclick="startExperience()" ontouchstart="startExperience()">
+        <div>点击/触摸任意处启动系统</div>
         <span>初始化音效引擎...</span>
     </div>
 
     <div id="editor-modal">
         <div id="editor-container">
             <h2>星云数据库编辑器</h2>
-            <p style="color:#888; font-size:12px; margin-bottom:10px;">每行一段文字，星云将随机抽取生成。</p>
+            <p style="color:#888; font-size:clamp(10px,2.5vw,12px); margin-bottom:10px;">每行一段文字，星云将随机抽取生成。</p>
             <textarea id="text-input"></textarea>
             <div class="btn-group">
-                <button class="modal-btn btn-cancel" onclick="closeEditor()">取消</button>
-                <button class="modal-btn btn-save" onclick="saveText()">保存并重组</button>
+                <button class="modal-btn btn-cancel" onclick="closeEditor()" ontouchstart="closeEditor()">取消</button>
+                <button class="modal-btn btn-save" onclick="saveText()" ontouchstart="saveText()">保存并重组</button>
             </div>
         </div>
-    </div>
-
-    <div id="camera-preview-container">
-        <video id="camera-preview-video" autoplay muted playsinline></video>
     </div>
 
     <div id="hud">
@@ -182,12 +234,11 @@
             <div>
                 <h1>lizerui</h1>
                 <div class="sub-text">
-                    luo<span class="highlight">xiao</span>yu /  实力不够<span class="highlight">还请谅解</span>  
+                    luo<span class="highlight">x</span>yu/  <span class="highlight">技术</span>  /  <span class="highlight">不够</span>还请见谅  / 
                 </div>
                 <div class="controls-row">
-                </div>
             </div>
-            <div style="width: 200px;"></div> 
+            <div style="width: clamp(100px, 25vw, 200px);"></div> <!-- 占位符自适应 -->
         </div>
         <div id="dissolve-bar-container"><div id="dissolve-bar"></div></div>
     </div>
@@ -200,7 +251,6 @@
             }
         }
     </script>
-    <!-- 移除所有MediaPipe摄像头相关的JS引入 -->
 
     <script type="module">
         import * as THREE from 'three';
@@ -209,7 +259,7 @@
         import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
         import GUI from 'three/addons/libs/lil-gui.module.min.js'; 
 
-        // --- 音频系统 (混合模式：Web Audio API 用于音效, HTML5 Audio 用于BGM) ---
+        // --- 音频系统 (新增单击专属音效) ---
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         let isAudioStarted = false;
         let bgmElement = new Audio(); // 用户音乐播放器
@@ -230,7 +280,7 @@
             }
         });
 
-        // 播放合成音效 (悬停/爆炸)
+        // 播放合成音效 (悬停/单击/爆炸 三种)
         function playSound(type) {
             if(!isAudioStarted) return;
             const osc = audioCtx.createOscillator();
@@ -249,6 +299,15 @@
                 gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
                 osc.start(now);
                 osc.stop(now + 0.1);
+            } else if (type === 'click-zoom') {
+                // 单击放大：柔和的中频上升音，更轻量
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(400, now);
+                osc.frequency.exponentialRampToValueAtTime(600, now + 0.2);
+                gain.gain.setValueAtTime(0.08, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+                osc.start(now);
+                osc.stop(now + 0.2);
             } else if (type === 'explode') {
                 // 爆炸白噪/低频扫描
                 osc.type = 'sawtooth';
@@ -272,15 +331,28 @@
             }
         };
 
-        // --- 核心变量 ---
+        // --- 核心变量 (新增触摸/双指缩放相关状态) ---
         let scene, camera, renderer, composer, bloomPass;
         let clock = new THREE.Clock();
         let raycaster = new THREE.Raycaster();
         let mouse = new THREE.Vector2();
+        // 触摸相关核心变量
+        let touches = {}; // 存储触摸点 {0: {x,y}, 1: {x,y}}
+        let lastTouchDistance = 0; // 上一帧双指距离，用于计算缩放
+        let isSingleTouch = true; // 是否为单指触摸（区分单指拖动和双指缩放）
         
-        // 移除所有手部状态相关变量
-        let isMouseDown = false; // 鼠标是否按下
-        let lastMouseX = 0, lastMouseY = 0; // 上一帧鼠标位置
+        let isMouseDown = false; // 鼠标/单指是否按下
+        let lastMouseX = 0, lastMouseY = 0; // 上一帧鼠标/触摸位置
+        let clickDownTime = 0; // 按下时间戳（区分单击/长按）
+        const CLICK_THRESHOLD = 200; // 单击判定阈值(ms)，超过则为长按
+        const TOUCH_MOVE_THRESHOLD = 10; // 触摸移动阈值，避免单击误判
+        let touchMoveDistance = 0; // 触摸移动距离，用于判定是否为单击
+
+        // 单击放大状态
+        let zoomingCard = null; // 正在放大的卡片
+        let zoomEndTime = 0; // 放大停留结束时间戳
+        const ZOOM_STAY_TIME = 2000; // 放大停留时间(ms)，可自定义
+        let isZoomPaused = false; // 是否处于放大停留状态（禁止拖动/重复单击）
 
         // 全局冷却时间 (时间戳)
         let cooldownEndTime = 0;
@@ -345,7 +417,7 @@
             { bg: ['#4568DC', '#B06AB3'], border: '#B06AB3', particle: [0xB06AB3, 0x4568DC] } 
         ];
 
-        // --- 全局参数 ---
+        // --- 全局参数 (移动端微调灵敏度，更顺手) ---
         const params = {
             // 星云生成
             count: 350, 
@@ -359,7 +431,7 @@
             rotationSpeed: 0.012, 
 
             // 交互
-            zoomScale: 6.5,  
+            zoomScaleRatio: 0.8,  // 替换原固定zoomScale：放大宽度占屏幕宽度的比例(0-1)，手机端推荐0.8-0.9
             dissolveTime: 3.0,   
             cooldownTime: 2000,  
             
@@ -367,9 +439,11 @@
             bloomStrength: 0.7,
             bloomRadius: 0.8,
             bloomThreshold: 0.15,
-            // 新增鼠标控制灵敏度
+            // 鼠标/触摸控制灵敏度（移动端已适配，此值通用）
             mouseSensitivity: 0.005,
-            wheelSensitivity: 5
+            wheelSensitivity: 5,
+            // 双指缩放灵敏度
+            touchZoomSensitivity: 0.08
         };
 
         // --- 文本编辑器逻辑 ---
@@ -396,76 +470,254 @@
             }
         }
 
-        // --- B键 沉浸模式逻辑 ---
+        // --- B键 沉浸模式逻辑 + 移动端返回键兼容 ---
         window.addEventListener('keydown', (e) => {
             if(e.key.toLowerCase() === 'b') {
                 document.body.classList.toggle('clean-mode');
             }
         });
+        // 移动端浏览器返回键兼容，防止误退
+        window.addEventListener('popstate', () => {
+            if(document.body.classList.contains('clean-mode')) {
+                document.body.classList.remove('clean-mode');
+                history.pushState({}, '');
+            }
+        });
+        history.pushState({}, '');
 
-        // --- 新增：鼠标拖动/滚轮 控制逻辑 ---
+        // --- 计算双指之间的距离 ---
+        function getTouchDistance(t0, t1) {
+            const dx = t0.x - t1.x;
+            const dy = t0.y - t1.y;
+            return Math.sqrt(dx * dx + dy * dy);
+        }
+
+        // --- 鼠标+触摸 控制逻辑（核心适配：单指拖动、双指缩放、触摸单击/长按）---
         function initMouseControl() {
-            // 鼠标按下事件
+            // === 桌面端鼠标事件 ===
+            // 鼠标按下
             document.addEventListener('mousedown', (e) => {
-                if (e.button === 0) { // 左键
+                if (e.button === 0 && !isZoomPaused && !isCoolingDown()) {
                     isMouseDown = true;
+                    clickDownTime = Date.now();
                     lastMouseX = e.clientX;
                     lastMouseY = e.clientY;
                     document.body.classList.add('dragging');
-                    // 阻止默认行为避免选中内容
                     e.preventDefault();
                 }
             });
-
-            // 鼠标移动事件
+            // 鼠标移动
             document.addEventListener('mousemove', (e) => {
-                if (!isMouseDown) return;
-                // 计算鼠标偏移量
+                if (!isMouseDown || isZoomPaused) return;
                 const deltaX = e.clientX - lastMouseX;
                 const deltaY = e.clientY - lastMouseY;
-                // 更新上一帧位置
                 lastMouseX = e.clientX;
                 lastMouseY = e.clientY;
-                // 控制视角旋转（lon: 水平, lat: 垂直）
                 camTarget.lon += deltaX * params.mouseSensitivity;
                 camTarget.lat -= deltaY * params.mouseSensitivity;
-                // 限制垂直视角范围，避免翻倒
                 camTarget.lat = THREE.MathUtils.clamp(camTarget.lat, -Math.PI/3, Math.PI/3);
-                // 阻止默认行为
                 e.preventDefault();
             });
-
-            // 鼠标松开事件
+            // 鼠标松开
             document.addEventListener('mouseup', (e) => {
                 if (e.button === 0) {
-                    isMouseDown = false;
-                    document.body.classList.remove('dragging');
+                    handlePointerUp(e.clientX, e.clientY);
                 }
             });
-
-            // 鼠标离开窗口事件
+            // 鼠标离开
             document.addEventListener('mouseleave', () => {
-                isMouseDown = false;
-                document.body.classList.remove('dragging');
+                handlePointerUp(0, 0);
             });
-
-            // 鼠标滚轮缩放事件
+            // 鼠标滚轮
             document.addEventListener('wheel', (e) => {
-                // 滚轮deltaY：向下为正，向上为负 → 向下滚轮拉远，向上滚轮拉近
+                if (isZoomPaused) return;
                 const delta = e.deltaY * 0.1;
                 camTarget.radius += delta * params.wheelSensitivity;
-                // 限制缩放范围
                 camTarget.radius = THREE.MathUtils.clamp(camTarget.radius, 25, 160);
-                // 阻止默认行为避免页面滚动
                 e.preventDefault();
             });
 
-            // 鼠标移动更新射线检测的鼠标位置
+            // === 移动端触摸事件 核心适配 ===
+            // 触摸开始：单指/双指识别
+            document.addEventListener('touchstart', (e) => {
+                e.preventDefault(); // 禁止默认行为
+                if (isZoomPaused || isCoolingDown()) return;
+
+                // 存储所有触摸点
+                for (let i = 0; i < e.touches.length; i++) {
+                    const touch = e.touches[i];
+                    touches[touch.identifier] = { x: touch.clientX, y: touch.clientY };
+                }
+
+                // 双指触摸：开启缩放模式，关闭拖动
+                if (e.touches.length === 2) {
+                    isSingleTouch = false;
+                    lastTouchDistance = getTouchDistance(touches[e.touches[0].identifier], touches[e.touches[1].identifier]);
+                } 
+                // 单指触摸：开启拖动模式，记录初始状态
+                else if (e.touches.length === 1) {
+                    isSingleTouch = true;
+                    isMouseDown = true;
+                    clickDownTime = Date.now();
+                    touchMoveDistance = 0; // 重置触摸移动距离
+                    const touch = e.touches[0];
+                    lastMouseX = touch.clientX;
+                    lastMouseY = touch.clientY;
+                    document.body.classList.add('dragging');
+                    // 触摸悬停模拟：添加hover样式
+                    const btn = document.elementFromPoint(touch.clientX, touch.clientY);
+                    if (btn && btn.classList.contains('hud-btn')) btn.classList.add('touch-hover');
+                }
+            }, { passive: false }); // 必须设置passive:false，否则e.preventDefault()无效
+
+            // 触摸移动：单指拖动 / 双指缩放
+            document.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                if (isZoomPaused || isCoolingDown()) return;
+
+                // 更新触摸点
+                for (let i = 0; i < e.touches.length; i++) {
+                    const touch = e.touches[i];
+                    touches[touch.identifier] = { x: touch.clientX, y: touch.clientY };
+                }
+
+                // 双指缩放
+                if (e.touches.length === 2 && !isSingleTouch) {
+                    const currentDistance = getTouchDistance(touches[e.touches[0].identifier], touches[e.touches[1].identifier]);
+                    if (lastTouchDistance > 0) {
+                        const delta = (currentDistance - lastTouchDistance) * params.touchZoomSensitivity;
+                        camTarget.radius -= delta;
+                        camTarget.radius = THREE.MathUtils.clamp(camTarget.radius, 25, 160);
+                    }
+                    lastTouchDistance = currentDistance;
+                } 
+                // 单指拖动
+                else if (e.touches.length === 1 && isSingleTouch && isMouseDown) {
+                    const touch = e.touches[0];
+                    const deltaX = touch.clientX - lastMouseX;
+                    const deltaY = touch.clientY - lastMouseY;
+                    // 累计触摸移动距离，用于判定是否为单击
+                    touchMoveDistance += Math.sqrt(deltaX*deltaX + deltaY*deltaY);
+                    lastMouseX = touch.clientX;
+                    lastMouseY = touch.clientY;
+                    camTarget.lon += deltaX * params.mouseSensitivity;
+                    camTarget.lat -= deltaY * params.mouseSensitivity;
+                    camTarget.lat = THREE.MathUtils.clamp(camTarget.lat, -Math.PI/3, Math.PI/3);
+                }
+
+                // 更新射线检测的鼠标位置（兼容触摸）
+                if (e.touches.length >= 1) {
+                    const touch = e.touches[0];
+                    mouse.x = (touch.clientX / window.innerWidth) * 2 - 1;
+                    mouse.y = -(touch.clientY / window.innerHeight) * 2 + 1;
+                }
+            }, { passive: false });
+
+            // 触摸结束：重置状态，判定单击/长按
+            document.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                // 移除触摸点
+                for (let i = 0; i < e.changedTouches.length; i++) {
+                    const touch = e.changedTouches[i];
+                    delete touches[touch.identifier];
+                    // 移除hover样式
+                    const btn = document.elementFromPoint(touch.clientX, touch.clientY);
+                    if (btn && btn.classList.contains('hud-btn')) btn.classList.remove('touch-hover');
+                }
+
+                // 最后一个触摸点离开，处理松开逻辑
+                if (e.touches.length === 0) {
+                    const lastTouch = e.changedTouches[0];
+                    handlePointerUp(lastTouch.clientX, lastTouch.clientY);
+                    isSingleTouch = true;
+                    lastTouchDistance = 0;
+                } 
+                // 双指变单指，重置单指状态
+                else if (e.touches.length === 1) {
+                    isSingleTouch = true;
+                    const touch = e.touches[0];
+                    lastMouseX = touch.clientX;
+                    lastMouseY = touch.clientY;
+                }
+            }, { passive: false });
+
+            // 触摸取消（如来电、弹窗）
+            document.addEventListener('touchcancel', (e) => {
+                e.preventDefault();
+                touches = {};
+                handlePointerUp(0, 0);
+                isSingleTouch = true;
+                lastTouchDistance = 0;
+                // 移除所有hover样式
+                document.querySelectorAll('.hud-btn.touch-hover').forEach(btn => btn.classList.remove('touch-hover'));
+            }, { passive: false });
+
+            // 鼠标/触摸 移动时更新射线检测位置（通用）
             document.addEventListener('mousemove', (e) => {
-                // 转换为Three.js的标准化设备坐标(-1 ~ 1)
                 mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
                 mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
             });
+        }
+
+        // --- 鼠标/触摸 松开通用处理函数（核心：统一判定单击/长按）---
+        function handlePointerUp(clientX, clientY) {
+            isMouseDown = false;
+            document.body.classList.remove('dragging');
+            
+            // 仅在 非放大/非冷却 状态下判定单击
+            if (!isZoomPaused && !isCoolingDown()) {
+                const clickDuration = Date.now() - clickDownTime;
+                // 单击判定：按下时间 < 阈值 + 移动距离 < 阈值（防拖动误判）
+                if (clickDuration < CLICK_THRESHOLD && touchMoveDistance < TOUCH_MOVE_THRESHOLD) {
+                    // 转换坐标为three.js的鼠标坐标
+                    mouse.x = (clientX / window.innerWidth) * 2 - 1;
+                    mouse.y = -(clientY / window.innerHeight) * 2 + 1;
+                    // 射线检测点击的卡片
+                    raycaster.setFromCamera(mouse, camera);
+                    const activePopups = popups.filter(p => !p.userData.isDissolved && !p.userData.isDissolving);
+                    const intersects = raycaster.intersectObjects(activePopups);
+                    if (intersects.length > 0) {
+                        const clickCard = intersects[0].object;
+                        triggerCardZoom(clickCard); // 触发单击放大
+                    }
+                }
+            }
+            // 重置触摸相关状态
+            touchMoveDistance = 0;
+        }
+
+        // --- 单击卡片放大核心函数 ---
+        function triggerCardZoom(card) {
+            if (zoomingCard || isZoomPaused) return; // 已有放大卡片，禁止重复单击
+            zoomingCard = card;
+            isZoomPaused = true;
+            zoomEndTime = Date.now() + ZOOM_STAY_TIME; // 设定停留结束时间
+            document.body.classList.add('zoom-pause'); // 切换光标样式
+            playSound('click-zoom'); // 播放单击专属音效
+
+            // 初始化卡片放大的详细纹理（如果没有的话）
+            const data = card.userData;
+            if (!data.detailedTex) {
+                data.detailedTex = createTexture(data.text, data.subText, data.paletteId);
+            }
+        }
+
+        // --- 冷却状态判定工具函数 ---
+        function isCoolingDown() {
+            return Date.now() < cooldownEndTime;
+        }
+
+        // --- 新增：计算屏幕适配的放大比例（核心适配手机端）---
+        function getScreenAdaptedZoomScale() {
+            // 基于屏幕宽度计算放大比例，单位：three.js世界单位
+            // 手机端窄屏：放大后卡片宽度占屏幕80%；桌面端宽屏：限制最大宽度，避免过大
+            const screenWidth = window.innerWidth;
+            // 基础比例：每100px屏幕宽度对应1个three.js世界单位，可根据需要微调
+            const baseUnitPer100px = 1;
+            let zoomScale = (screenWidth / 100) * baseUnitPer100px * params.zoomScaleRatio;
+            // 限制最大/最小放大比例，避免极端情况
+            zoomScale = THREE.MathUtils.clamp(zoomScale, 4, 10);
+            return zoomScale;
         }
 
         function init() {
@@ -474,10 +726,16 @@
 
             camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
             
-            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
+            renderer = new THREE.WebGLRenderer({ 
+                antialias: true, 
+                alpha: true, 
+                powerPreference: "high-performance",
+                preserveDrawingBuffer: true // 移动端保存绘制缓冲区，防止闪屏
+            });
             renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // 限制像素比，移动端性能优化
             renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.setClearColor(0x02020a, 1); // 设定清屏颜色，适配移动端透明问题
             document.body.appendChild(renderer.domElement);
 
             const renderScene = new RenderPass(scene, camera);
@@ -490,16 +748,19 @@
             composer = new EffectComposer(renderer);
             composer.addPass(renderScene);
             composer.addPass(bloomPass);
+            // 移动端适配EffectComposer像素比
+            composer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
             particleTexture = createParticleTexture();
             initParticles();
             initPopups();
             scene.add(popupGroup);
             initGUI();
-            // 初始化鼠标控制
-            initMouseControl();
+            initMouseControl(); // 初始化鼠标+触摸控制
 
             window.addEventListener('resize', onWindowResize);
+            // 移动端窗口大小变化（如旋转屏幕）立即适配
+            window.addEventListener('orientationchange', onWindowResize);
         }
 
         // --- 兼容绘制 ---
@@ -517,8 +778,9 @@
 
         function createTexture(text, subText, paletteIndex) {
             const canvas = document.createElement('canvas');
-            const w = 512;
-            const h = subText ? 350 : 256; 
+            // 移动端纹理大小适配，避免过大导致性能问题
+            const w = Math.min(512, window.innerWidth * 0.8);
+            const h = subText ? (w * 350) / 512 : (w * 256) / 512; 
             canvas.width = w; canvas.height = h; 
             
             const ctx = canvas.getContext('2d');
@@ -534,46 +796,50 @@
                 grad.addColorStop(1, style.bg[1]);
             }
             
-            const r = 24;
+            const r = Math.min(24, w * 0.05); // 圆角自适应纹理大小
             drawRoundRect(ctx, 0, 0, w, h, r);
             ctx.fillStyle = grad;
             ctx.globalAlpha = 0.8; 
             ctx.fill();
 
             ctx.globalAlpha = 1.0;
-            ctx.lineWidth = 6;
+            ctx.lineWidth = Math.min(6, w * 0.012); // 边框宽度自适应
             ctx.strokeStyle = "rgba(255,255,255,0.1)";
             ctx.stroke();
-            ctx.lineWidth = 2;
+            ctx.lineWidth = Math.min(2, w * 0.004);
             ctx.strokeStyle = style.border; 
             ctx.globalAlpha = 0.5;
             ctx.stroke();
             ctx.globalAlpha = 1.0;
 
-            ctx.fillStyle = style.bg[0]; ctx.beginPath(); ctx.arc(40, 40, 8, 0, Math.PI*2); ctx.fill();
-            ctx.fillStyle = style.border; ctx.beginPath(); ctx.arc(70, 40, 8, 0, Math.PI*2); ctx.fill();
-            ctx.fillStyle = style.bg[style.bg.length-1]; ctx.beginPath(); ctx.arc(100, 40, 8, 0, Math.PI*2); ctx.fill();
+            // 小图标自适应
+            const dotSize = Math.min(8, w * 0.02);
+            ctx.fillStyle = style.bg[0]; ctx.beginPath(); ctx.arc(w*0.08, w*0.08, dotSize, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = style.border; ctx.beginPath(); ctx.arc(w*0.14, w*0.08, dotSize, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = style.bg[style.bg.length-1]; ctx.beginPath(); ctx.arc(w*0.20, w*0.08, dotSize, 0, Math.PI*2); ctx.fill();
 
             ctx.shadowColor = "rgba(0,0,0,0.6)";
-            ctx.shadowBlur = 12;
-            ctx.shadowOffsetY = 5;
+            ctx.shadowBlur = Math.min(12, w * 0.024);
+            ctx.shadowOffsetY = Math.min(5, w * 0.01);
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
 
-            const mainTextY = subText ? h/2 - 35 : h/2 + 5; 
-            ctx.font = "bold 72px 'Microsoft YaHei'";
+            const mainTextY = subText ? h/2 - w*0.07 : h/2 + w*0.01; 
+            // 主文字大小自适应
+            ctx.font = `bold ${Math.min(72, w*0.14)}px 'Microsoft YaHei'`;
             ctx.fillStyle = "#ffffff";
             ctx.fillText(text, w/2, mainTextY);
 
             if (subText) {
-                ctx.font = "normal 26px 'Microsoft YaHei'";
+                // 副文字大小自适应
+                ctx.font = `normal ${Math.min(26, w*0.05)}px 'Microsoft YaHei'`;
                 ctx.fillStyle = "rgba(255, 255, 255, 0.85)";
                 ctx.shadowBlur = 0; 
                 
-                const maxWidth = w - 70;
+                const maxWidth = w - w*0.14;
                 let words = subText.split('');
                 let line = '';
-                let y = mainTextY + 75;
+                let y = mainTextY + w*0.15;
                 
                 for(let n = 0; n < words.length; n++) {
                     let testLine = line + words[n];
@@ -581,7 +847,7 @@
                     if (metrics.width > maxWidth && n > 0) {
                         ctx.fillText(line, w/2, y);
                         line = words[n];
-                        y += 38;
+                        y += w*0.075;
                     } else {
                         line = testLine;
                     }
@@ -812,12 +1078,14 @@
                 folderVisuals.add(params, 'bloomRadius', 0, 1.5, 0.1).name('辉光半径');
                 folderVisuals.add(params, 'bloomThreshold', 0, 1, 0.05).name('辉光阈值');
                 const folderInteract = gui.addFolder('交互体验');
-                folderInteract.add(params, 'zoomScale', 4.0, 10.0).name('阅读尺寸');
-                folderInteract.add(params, 'dissolveTime', 1.0, 8.0, 0.5).name('分解耗时(秒)');
-                // 新增鼠标控制灵敏度调节
-                const folderMouse = gui.addFolder('鼠标控制');
+                // 替换原zoomScale为屏幕比例参数，支持GUI调节
+                folderInteract.add(params, 'zoomScaleRatio', 0.6, 0.95, 0.05).name('放大占屏比例');
+                folderInteract.add(params, 'dissolveTime', 1.0, 8.0, 0.5).name('爆炸耗时(秒)');
+                // 鼠标/触摸控制灵敏度调节
+                const folderMouse = gui.addFolder('鼠标/触摸控制');
                 folderMouse.add(params, 'mouseSensitivity', 0.001, 0.01, 0.001).name('拖动灵敏度');
                 folderMouse.add(params, 'wheelSensitivity', 1, 10, 1).name('滚轮灵敏度');
+                folderMouse.add(params, 'touchZoomSensitivity', 0.02, 0.2, 0.02).name('双指缩放灵敏度');
             } catch (e) { console.warn("GUI load failed"); }
         }
 
@@ -836,31 +1104,39 @@
             const barContainer = document.getElementById('dissolve-bar-container');
             const bar = document.getElementById('dissolve-bar');
 
-            let isCoolingDown = currentTimeMs < cooldownEndTime;
+            let coolingDown = isCoolingDown();
+            // 检测放大停留是否结束
+            if (isZoomPaused && currentTimeMs >= zoomEndTime) {
+                isZoomPaused = false;
+                zoomingCard = null;
+                document.body.classList.remove('zoom-pause');
+            }
 
-            // 摄像头未激活时的自动旋转保留，鼠标拖动时会覆盖
-            if (!isMouseDown && !isCoolingDown) {
+            // 非放大/非拖动/非冷却时，保留自动旋转
+            if (!isMouseDown && !isZoomPaused && !coolingDown) {
                 camTarget.lon = time * 0.05;
                 camTarget.lat = Math.sin(time * 0.1) * 0.2;
             }
 
-            // 平滑更新摄像头位置
-            camCurrent.lon += (camTarget.lon - camCurrent.lon) * 0.05;
-            camCurrent.lat += (camTarget.lat - camCurrent.lat) * 0.05;
-            camCurrent.radius += (camTarget.radius - camCurrent.radius) * 0.1; 
+            // 平滑更新摄像头位置（放大停留时禁止视角变化）
+            if (!isZoomPaused) {
+                camCurrent.lon += (camTarget.lon - camCurrent.lon) * 0.05;
+                camCurrent.lat += (camTarget.lat - camCurrent.lat) * 0.05;
+                camCurrent.radius += (camTarget.radius - camCurrent.radius) * 0.1; 
+            }
             
-            // 计算摄像头三维坐标
+            // 计算摄像头三维坐标，增加NaN容错，移动端更稳定
             let cx = camCurrent.radius * Math.cos(camCurrent.lat) * Math.sin(camCurrent.lon);
             let cy = camCurrent.radius * Math.sin(camCurrent.lat);
             let cz = camCurrent.radius * Math.cos(camCurrent.lat) * Math.cos(camCurrent.lon);
-            if (isNaN(cx)) { cx = 0; cy = 0; cz = 85; } 
+            if (isNaN(cx) || isNaN(cy) || isNaN(cz)) { cx = 0; cy = 0; cz = 85; } 
 
             camera.position.set(cx, cy, cz);
             camera.lookAt(0, 0, 0);
 
-            // 射线检测：检测鼠标悬停的卡片
+            // 射线检测：检测鼠标/触摸悬停的卡片（冷却/放大时关闭）
             let currentHover = null;
-            if (!isCoolingDown) {
+            if (!coolingDown && !isZoomPaused) {
                 raycaster.setFromCamera(mouse, camera);
                 const activePopups = popups.filter(p => !p.userData.isDissolved && !p.userData.isDissolving);
                 const intersects = raycaster.intersectObjects(activePopups);
@@ -869,8 +1145,8 @@
                 }
             }
 
-            // 音效触发：悬停变化
-            if (currentHover && currentHover !== lastHoverObj) {
+            // 音效触发：悬停变化（冷却/放大时关闭）
+            if (currentHover && currentHover !== lastHoverObj && !coolingDown && !isZoomPaused) {
                 playSound('hover');
             }
             lastHoverObj = currentHover;
@@ -880,6 +1156,7 @@
             popups.forEach(mesh => {
                 const data = mesh.userData;
                 
+                // 卡片爆炸溶解逻辑
                 if (data.isDissolved) {
                     if (mesh.material.opacity <= 0.05) {
                          data.isDissolving = false;
@@ -893,7 +1170,6 @@
                     } else { mesh.material.opacity *= 0.9; }
                     return; 
                 }
-
                 if (data.isDissolving) {
                     const expansionSpeed = 1.05; 
                     mesh.scale.multiplyScalar(expansionSpeed);
@@ -903,9 +1179,33 @@
                     return;
                 }
 
+                // --- 核心：单击放大逻辑（优先级高于长按/悬停）---
+                if (zoomingCard === mesh && isZoomPaused) {
+                    // 强制切换到详细纹理
+                    if (mesh.material.map !== data.detailedTex) {
+                        mesh.material.map = data.detailedTex;
+                    }
+                    // 关键修改：使用屏幕适配的动态放大比例，替代固定zoomScale
+                    const targetScale = getScreenAdaptedZoomScale();
+                    const ratioFix = 350/256;
+                    mesh.scale.lerp(new THREE.Vector3(targetScale, targetScale * ratioFix, 1), 0.2);
+                    mesh.material.opacity = 1.0; // 强制不透明
+                    
+                    // 卡片固定到镜头前方，跟随视角，移动端微调距离避免贴脸
+                    const camDir = new THREE.Vector3();
+                    camera.getWorldDirection(camDir);
+                    // 动态调整卡片与镜头的距离：屏幕越小，距离越近，避免手机上看不清
+                    const camDistance = THREE.MathUtils.clamp(window.innerWidth / 50, 20, 30);
+                    const targetWorldPos = camera.position.clone().add(camDir.multiplyScalar(camDistance));
+                    const targetLocalPos = mesh.parent.worldToLocal(targetWorldPos.clone());
+                    mesh.position.lerp(targetLocalPos, 0.2);
+                    mesh.quaternion.slerp(camera.quaternion, 0.2);
+                    return; // 跳过后续的长按/漂浮逻辑
+                }
+
+                // 原有长按爆炸逻辑（仅在非放大/非冷却时生效）
                 const isTarget = (currentHover === mesh);
-                // 替换捏合检测为：鼠标左键按下 + 悬停卡片
-                const shouldRead = isTarget && isMouseDown && !isCoolingDown;
+                const shouldRead = isTarget && isMouseDown && !coolingDown && !isZoomPaused;
 
                 let targetScale = data.randomScaleFactor * params.cardBaseSize; 
                 let targetScaleY = targetScale; 
@@ -951,7 +1251,7 @@
                         return; 
                     }
 
-                    targetScale = params.zoomScale + sizeGlitch; 
+                    targetScale = getScreenAdaptedZoomScale() + sizeGlitch; 
                     if (!data.detailedTex) data.detailedTex = createTexture(data.text, data.subText, data.paletteId);
                     if (mesh.material.map !== data.detailedTex) mesh.material.map = data.detailedTex;
                     const ratioFix = (350/256); 
@@ -959,7 +1259,9 @@
 
                     const camDir = new THREE.Vector3();
                     camera.getWorldDirection(camDir);
-                    const targetWorldPos = camera.position.clone().add(camDir.multiplyScalar(25));
+                    // 长按放大也适配屏幕距离
+                    const camDistance = THREE.MathUtils.clamp(window.innerWidth / 50, 20, 30);
+                    const targetWorldPos = camera.position.clone().add(camDir.multiplyScalar(camDistance));
                     targetWorldPos.add(shakeOffset);
                     const targetLocalPos = mesh.parent.worldToLocal(targetWorldPos.clone());
                     mesh.position.lerp(targetLocalPos, 0.15);
@@ -973,6 +1275,7 @@
                     mesh.quaternion.slerp(targetLocalQuat, 0.15);
 
                 } else {
+                    // 恢复卡片漂浮逻辑
                     data.isReadingMode = false; 
                     data.holdStartTime = 0; 
                     if (mesh.material.map !== data.originalTex) mesh.material.map = data.originalTex;
@@ -1000,16 +1303,30 @@
                 particles.rotation.x = Math.sin(time * 0.01) * 0.1;
             }
             
-            popupGroup.rotation.y = -time * params.rotationSpeed;
+            // 放大停留时，暂停星云整体旋转
+            if (!isZoomPaused) {
+                popupGroup.rotation.y = -time * params.rotationSpeed;
+            }
             updateExplosions(0.016); 
             composer.render();
         }
 
+        // --- 响应式调整核心函数（适配窗口/屏幕旋转）---
         function onWindowResize() {
+            // 更新相机宽高比
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
+            // 更新渲染器/合成器尺寸，适配视口
             renderer.setSize(window.innerWidth, window.innerHeight);
             composer.setSize(window.innerWidth, window.innerHeight);
+            // 更新辉光效果的分辨率
+            bloomPass.setSize(window.innerWidth, window.innerHeight);
+            // 屏幕尺寸变化时，若有放大的卡片，重新计算适配比例
+            if (zoomingCard && isZoomPaused) {
+                const targetScale = getScreenAdaptedZoomScale();
+                const ratioFix = 350/256;
+                zoomingCard.scale.lerp(new THREE.Vector3(targetScale, targetScale * ratioFix, 1), 0.5);
+            }
         }
 
         init();
