@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <!-- 强化移动端适配 -->
+    <!-- 移动端增强适配 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -15,8 +15,6 @@
         :root {
             --ice-blue: #7A9BB5;
             --light-purple: #C4DAE8;
-            --danger-red: #ff6b7b;
-            --success-green: #4ade80;
         }
         
         * {
@@ -28,22 +26,6 @@
             background: radial-gradient(at center bottom, #0D1117 0%, #0A0F1A 100%);
             color: #C4DAE8;
             overflow-x: hidden;
-            position: relative;
-        }
-        /* 全局流动星云背景动画 */
-        body::before{
-            content:"";
-            position:fixed;
-            width:100%;
-            height:100%;
-            background: radial-gradient(30% 40% at 20% 20%, rgba(122,155,181,0.08) 0%, transparent 60%),
-            radial-gradient(35% 35% at 80% 70%, rgba(196,218,232,0.06) 0%, transparent 60%);
-            animation: nebulaMove 25s linear infinite alternate;
-            z-index:-2;
-        }
-        @keyframes nebulaMove {
-            0% { transform: translate(0,0) scale(1); }
-            100% { transform: translate(40px,-30px) scale(1.1); }
         }
         
         .glass {
@@ -53,11 +35,11 @@
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4),
                         inset 0 0 40px rgba(122, 155, 181, 0.08);
         }
-        /* 移动端弱化玻璃阴影 */
+        /* 移动端弱化玻璃模糊与阴影，提升性能 */
         @media (max-width:768px) {
             .glass {
-                box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
                 backdrop-filter: blur(12px);
+                box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
             }
         }
         
@@ -79,19 +61,6 @@
             border-radius: inherit;
             transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
         }
-        /* 登录框扫描流动光 */
-        .auth-scan::after{
-            content:"";
-            position:absolute;
-            inset:0;
-            border-radius:inherit;
-            background: linear-gradient(90deg,transparent,rgba(196,218,232,0.2),transparent);
-            animation: scanFlow 3.5s linear infinite;
-        }
-        @keyframes scanFlow{
-            0%{transform:translateX(-100%)}
-            100%{transform:translateX(100%)}
-        }
         
         .hero-card {
             transition: transform 0.1s linear, box-shadow 0.3s ease;
@@ -105,13 +74,6 @@
             height: 100%;
             z-index: -1;
             pointer-events: none;
-        }
-        /* 弹窗内部粒子画布 */
-        .auth-particle{
-            position:absolute;
-            inset:0;
-            z-index:0;
-            pointer-events:none;
         }
         
         .nav-link {
@@ -149,282 +111,127 @@
             font-variant-numeric: tabular-nums;
         }
 
-        /* 登录弹窗动画 */
-        .auth-modal {
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+        /* ========== 移动端汉堡导航 ========== */
+        .hamburger {
+            display: none;
+            font-size: 24px;
+            color: #C4DAE8;
         }
-        .auth-modal.active {
-            opacity: 1;
-            visibility: visible;
-        }
-        .auth-content {
-            transform: translateY(30px) scale(0.95);
-            transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
-            position:relative;
-            overflow:hidden;
-        }
-        .auth-modal.active .auth-content {
-            transform: translateY(0) scale(1);
-        }
-
-        /* 科技感输入框 */
-        .tech-input {
-            background: rgba(13, 17, 23, 0.4);
-            border: 1px solid rgba(122, 155, 181, 0.2);
-            transition: all 0.3s ease;
-            position:relative;
-            overflow:hidden;
-        }
-        /* 输入波纹特效 */
-        .tech-input:focus::after{
-            content:"";
-            position:absolute;
-            width:100%;
-            height:100%;
-            left:0;top:0;
-            background: radial-gradient(circle, rgba(196,218,232,0.15) 0%, transparent 70%);
-            animation: inputRipple 1s ease-out forwards;
-        }
-        @keyframes inputRipple{
-            0%{transform:scale(0);opacity:1;}
-            100%{transform:scale(2);opacity:0;}
-        }
-        .tech-input:focus {
-            border-color: rgba(196, 218, 232, 0.6);
-            box-shadow: 0 0 15px rgba(122, 155, 181, 0.15);
-        }
-
-        /* 切换按钮样式 */
-        .tab-btn {
-            position: relative;
-            transition: all 0.3s ease;
-        }
-        .tab-btn.active::after {
-            content: '';
-            position: absolute;
-            bottom: -4px;
+        .mobile-nav {
+            position: fixed;
+            top: 0;
             left: 0;
             width: 100%;
-            height: 2px;
-            background: linear-gradient(90deg, #7A9BB5, #C4DAE8);
-        }
-
-        /* 加载动画 */
-        .loader {
-            width: 20px;
-            height: 20px;
-            border: 2px solid rgba(196, 218, 232, 0.3);
-            border-top: 2px solid #C4DAE8;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        /* 密码强度条 */
-        .pwd-bar{
-            height:4px;
-            border-radius:2px;
-            transition:all 0.3s;
-            background:#222;
-            margin-top:6px;
-        }
-        /* 生物识别按钮 */
-        .bio-btn{
-            width:100%;
-            height:50px;
-            background: rgba(13, 17, 23, 0.65);
-            border: 1px solid rgba(122, 155, 181, 0.25);
-            border-radius:12px;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            margin-top:16px;
-        }
-        /* 顶部全局状态栏 */
-        .status-bar{
-            position:fixed;
-            top:0;left:0;right:0;
-            height:24px;
-            background:rgba(13,17,23,0.9);
+            height: 100vh;
+            background: rgba(13,17,23,0.98);
             z-[60];
-            border-bottom:1px solid rgba(122,155,181,0.15);
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            gap:10px;
-            font-size:11px;
-            color:#7A9BB5;
-            padding:0 10px;
-            overflow-x:auto;
+            transform: translateX(-100%);
+            transition: transform 0.4s ease;
+            padding: 80px 24px;
         }
-        /* 手机状态栏缩短文字 */
-        @media (max-width:768px) {
-            .status-bar span:nth-child(2),
-            .status-bar span:nth-child(3) {
-                display:none;
+        .mobile-nav.open {
+            transform: translateX(0);
+        }
+        .mobile-nav a {
+            display: block;
+            font-size: 22px;
+            margin: 28px 0;
+            color: #C4DAE8;
+        }
+        .desktop-nav-left, .desktop-nav-buttons {
+            display: flex;
+        }
+        @media (max-width: 992px) {
+            .desktop-nav-left, .desktop-nav-buttons {
+                display: none !important;
+            }
+            .hamburger {
+                display: block;
             }
         }
-        nav{top:24px !important;}
-        /* 登录成功全屏脉冲 */
-        .success-pulse{
-            position:fixed;
-            inset:0;
-            pointer-events:none;
-            background:radial-gradient(circle, rgba(196,218,232,0.2) 0%, transparent 70%);
-            z-index:999;
-            animation:pulseExpand 1.2s ease-out forwards;
-        }
-        @keyframes pulseExpand{
-            0%{transform:scale(0);opacity:1;}
-            100%{transform:scale(3);opacity:0;}
-        }
-        /* 表单错误提示 */
-        .error-hint{
-            color:var(--danger-red);
-            font-size:12px;
-            margin-top:4px;
-            display:none;
-        }
 
-        /* ========== 移动端导航汉堡菜单 ========== */
-        .hamburger {
-            display:none;
-            font-size:24px;
-            color:#C4DAE8;
-        }
-        .mobile-nav-wrap {
-            position:fixed;
-            top:24px;
-            left:0;
-            width:100%;
-            height:calc(100vh - 24px);
-            background:rgba(13,17,23,0.98);
-            z-40;
-            transform:translateX(-100%);
-            transition:transform 0.4s ease;
-            padding:40px 24px;
-        }
-        .mobile-nav-wrap.open {
-            transform:translateX(0);
-        }
-        .mobile-nav-item {
-            display:block;
-            font-size:22px;
-            margin:24px 0;
-            color:#C4DAE8;
-        }
-
-        /* ========== 媒体查询响应式全局 ========== */
-        @media (max-width:1200px) {
-            h1 { font-size:56px !important; }
-        }
+        /* ========== 全局响应式媒体查询 ========== */
+        /* 平板 */
         @media (max-width:992px) {
-            /* Hero区域左右分栏改为上下堆叠 */
-            .hero-row {
+            .hero-wrap {
                 grid-template-columns: 1fr !important;
-                gap:60px !important;
             }
             .hero-card {
-                height:auto !important;
-                min-height:420px;
+                height: auto !important;
+                min-height: 420px;
             }
-            /* 三列卡片改为单列 */
             .grid-3 {
                 grid-template-columns: 1fr !important;
             }
+            h1 { font-size: 52px !important; }
         }
+        /* 手机 */
         @media (max-width:768px) {
-            /* 导航栏隐藏桌面菜单，显示汉堡 */
-            .desktop-nav-left, .desktop-nav-buttons {
-                display:none !important;
-            }
-            .hamburger {
-                display:block !important;
-            }
-            /* 全局缩小内边距 */
-            .section {
-                padding:80px 0 !important;
-            }
+            h1 { font-size: 36px !important; }
+            h2 { font-size: 30px !important; }
+            h3 { font-size: 22px !important; }
+            .stat-number { font-size: 34px !important; }
             .max-w-screen-2xl {
-                padding-left:20px !important;
-                padding-right:20px !important;
+                padding-left: 20px !important;
+                padding-right: 20px !important;
             }
-            /* 标题字号大幅缩小 */
-            h1 { font-size:38px !important; }
-            h2 { font-size:32px !important; }
-            h3 { font-size:24px !important; }
-            /* 统计数字缩小 */
-            .stat-number {
-                font-size:36px !important;
+            .section {
+                padding-top: 80px !important;
+                padding-bottom: 80px !important;
             }
-            /* 登录弹窗缩小padding */
-            #authWrap {
-                padding:30px 20px !important;
-                margin:0 16px;
+            .stat-row {
+                flex-direction: column !important;
+                gap: 24px !important;
+                align-items: flex-start !important;
             }
-            /* 按钮自适应宽度 */
-            .action-btn {
-                width:100% !important;
+            .btn-row {
+                flex-direction: column !important;
+                gap: 16px !important;
             }
-            /* Hero统计横向改纵向 */
-            .stat-group {
-                flex-direction:column !important;
-                gap:24px !important;
-                align-items:flex-start !important;
-            }
-            /* 顶部CTA卡片padding缩小 */
             .cta-card {
-                padding:60px 20px !important;
+                padding: 60px 20px !important;
+            }
+            /* 按钮手机铺满 */
+            button {
+                width: 100%;
+            }
+            nav button {
+                width: auto;
             }
         }
+        /* 小屏手机 */
         @media (max-width:480px) {
-            h1 { font-size:32px !important; }
-            /* 登录表单标签、输入框尺寸适配 */
-            .tech-input {
-                padding:14px 16px !important;
-            }
-            /* 弹窗标签间距缩小 */
-            .tab-wrap {
-                gap:40px !important;
+            h1 { font-size: 30px !important; }
+            .hero-card {
+                padding: 24px !important;
             }
         }
     </style>
 </head>
 <body class="min-h-screen">
     <!-- 移动端侧边导航 -->
-    <div class="mobile-nav-wrap" id="mobileNav">
-        <a href="#" class="mobile-nav-item nav-link">产品</a>
-        <a href="#" class="mobile-nav-item nav-link">特性</a>
-        <a href="#" class="mobile-nav-item nav-link">解决方案</a>
-        <a href="#" class="mobile-nav-item nav-link">定价</a>
-        <div class="mt-10 flex flex-col gap-4">
-            <button onclick="showLogin()" class="px-6 py-3 glass rounded-2xl text-base w-full">登录</button>
-            <button onclick="showDemo()" class="px-6 py-3 bg-gradient-to-r from-[#7A9BB5] to-[#C4DAE8] text-[#0D1117] font-semibold rounded-2xl w-full">立即体验</button>
+    <div class="mobile-nav" id="mobileNav">
+        <a href="#" class="nav-link">产品</a>
+        <a href="#" class="nav-link">特性</a>
+        <a href="#" class="nav-link">解决方案</a>
+        <a href="#" class="nav-link">定价</a>
+        <div class="flex flex-col gap-4 mt-10">
+            <button onclick="closeMobileNav();showLogin()" class="px-6 py-3 glass rounded-2xl text-base">登录</button>
+            <button onclick="closeMobileNav();showDemo()" class="px-6 py-3 bg-gradient-to-r from-[#7A9BB5] to-[#C4DAE8] text-[#0D1117] font-semibold rounded-2xl">立即体验</button>
         </div>
     </div>
 
-    <!-- 顶部全局实时状态栏 -->
-    <div class="status-bar">
-        <span><i class="fa-solid fa-wifi text-emerald-400 animate-pulse"></i> 节点在线</span>
-        <span>加密通道 AES-256</span>
-        <span>延迟 12ms</span>
-        <span>服务器 Q3-2026</span>
-    </div>
     <!-- Particle Canvas -->
     <canvas id="particleCanvas" class="particle-bg"></canvas>
 
     <!-- Navbar -->
     <nav class="fixed top-0 left-0 right-0 z-50 glass border-b border-white/10">
         <div class="max-w-screen-2xl mx-auto px-5 md:px-8 py-4 flex items-center justify-between">
-            <!-- 移动端汉堡按钮 -->
+            <!-- 汉堡按钮 -->
             <button class="hamburger" id="hamburgerBtn">
                 <i class="fa-solid fa-bars"></i>
             </button>
-            <!-- Left Menu 桌面端 -->
+            <!-- Left Menu -->
             <div class="desktop-nav-left flex items-center gap-x-6 lg:gap-x-10 text-sm font-medium">
                 <a href="#" class="nav-link text-white/90 hover:text-[#C4DAE8]">产品</a>
                 <a href="#" class="nav-link text-white/90 hover:text-[#C4DAE8]">特性</a>
@@ -435,10 +242,10 @@
             <!-- Logo -->
             <div class="flex items-center gap-x-3">
                 <div class="w-7 h-7 rounded-full bg-gradient-to-br from-[#7A9BB5] to-[#C4DAE8] flex items-center justify-center text-[#0D1117] font-bold text-xl leading-none pt-0.5">N</div>
-                <span class="text-xl md:text-2xl font-semibold tracking-tighter text-white">小y</span>
+                <span class="text-xl md:text-2xl font-semibold tracking-tighter text-white">NEXUS</span>
             </div>
 
-            <!-- Right Icons 桌面端 -->
+            <!-- Right Icons -->
             <div class="desktop-nav-buttons flex items-center gap-x-3 lg:gap-x-6">
                 <button onclick="toggleSearch()" 
                         class="w-10 h-10 flex items-center justify-center text-[#7A9BB5] hover:text-white transition-all hover:scale-110 active:scale-95">
@@ -460,101 +267,9 @@
         </div>
     </nav>
 
-    <!-- 登录注册弹窗 - 高级科技感升级 -->
-    <div id="authModal" class="auth-modal fixed inset-0 z-[200] flex items-center justify-center bg-black/70 backdrop-blur-xl">
-        <div id="authWrap" class="auth-content glass neon-border auth-scan w-full max-w-lg rounded-3xl p-10 relative">
-            <!-- 弹窗内部专属粒子 -->
-            <canvas id="authParticleCanvas" class="auth-particle"></canvas>
-            <!-- 关闭按钮 -->
-            <button onclick="closeLogin()" class="absolute top-6 right-6 w-8 h-8 flex items-center justify-center text-[#7A9BB5] hover:text-white transition-all z-10">
-                <i class="fa-solid fa-xmark text-lg"></i>
-            </button>
-
-            <!-- Logo -->
-            <div class="flex justify-center mb-8 relative z-10">
-                <div class="flex items-center gap-x-3">
-                    <div class="w-8 h-8 rounded-full bg-gradient-to-br from-[#7A9BB5] to-[#C4DAE8] flex items-center justify-center text-[#0D1117] font-bold text-xl">N</div>
-                    <span class="text-2xl font-semibold text-white">NEXUS</span>
-                </div>
-            </div>
-
-            <!-- 切换标签 -->
-            <div class="tab-wrap flex justify-center gap-x-12 mb-10 relative z-10">
-                <button id="loginTab" class="tab-btn active text-lg font-medium text-white">登录</button>
-                <button id="registerTab" class="tab-btn text-lg font-medium text-[#7A9BB5]">注册</button>
-            </div>
-
-            <!-- 登录表单 -->
-            <div id="loginForm" class="space-y-6 relative z-10">
-                <div class="space-y-4">
-                    <div>
-                        <label class="text-sm text-[#7A9BB5] block mb-2">账号 / 邮箱</label>
-                        <input id="loginAccount" type="text" class="tech-input w-full px-5 py-3.5 rounded-xl text-white outline-none" placeholder="请输入您的账号或邮箱">
-                        <div class="error-hint" id="accErr">账号不能为空</div>
-                    </div>
-                    <div>
-                        <label class="text-sm text-[#7A9BB5] block mb-2">密码</label>
-                        <input id="loginPwd" type="password" class="tech-input w-full px-5 py-3.5 rounded-xl text-white outline-none" placeholder="请输入密码">
-                        <div class="error-hint" id="pwdErr">密码不能为空</div>
-                    </div>
-                </div>
-                <!-- 生物识别快捷登录 -->
-                <button class="bio-btn flex items-center justify-center gap-3 hover:bg-white/10 transition-all" onclick="bioLogin()">
-                    <i class="fa-solid fa-fingerprint text-xl"></i>
-                    <span>生物快捷解锁</span>
-                </button>
-
-                <div class="flex justify-between items-center flex-wrap gap-3">
-                    <label class="flex items-center gap-x-2 cursor-pointer">
-                        <input type="checkbox" id="rememberAcc" class="rounded bg-[#0D1117] border-[#7A9BB5]/30 text-[#C4DAE8]">
-                        <span class="text-sm text-[#C4DAE8]/80">记住我</span>
-                    </label>
-                    <a href="#" class="text-sm text-[#7A9BB5] hover:text-[#C4DAE8] transition-colors">忘记密码？</a>
-                </div>
-
-                <button onclick="handleLogin()" class="action-btn w-full py-4 bg-gradient-to-r from-[#7A9BB5] to-[#C4DAE8] text-[#0D1117] font-semibold rounded-xl hover:brightness-110 transition-all flex items-center justify-center gap-x-2">
-                    <span>安全登录</span>
-                    <div id="loginLoader" class="loader hidden"></div>
-                </button>
-
-                <div class="text-center text-xs text-[#7A9BB5]">
-                    登录即表示您同意 <a href="#" class="text-[#C4DAE8]">服务条款</a> 和 <a href="#" class="text-[#C4DAE8]">隐私政策</a>
-                </div>
-            </div>
-
-            <!-- 注册表单（无验证码） -->
-            <div id="registerForm" class="space-y-6 hidden relative z-10">
-                <div class="space-y-4">
-                    <div>
-                        <label class="text-sm text-[#7A9BB5] block mb-2">邮箱</label>
-                        <input id="regMail" type="email" class="tech-input w-full px-5 py-3.5 rounded-xl text-white outline-none" placeholder="请输入您的邮箱">
-                        <div class="error-hint" id="mailErr">邮箱不能为空</div>
-                    </div>
-                    <div>
-                        <label class="text-sm text-[#7A9BB5] block mb-2">设置密码</label>
-                        <input id="regPwd" type="password" class="tech-input w-full px-5 py-3.5 rounded-xl text-white outline-none" placeholder="请设置8-20位密码">
-                        <div class="pwd-bar" id="pwdStrength"></div>
-                        <div class="text-xs mt-1" id="strengthText">密码强度</div>
-                        <div class="error-hint" id="regPwdErr">密码长度不足8位</div>
-                    </div>
-                </div>
-
-                <label class="flex items-center gap-x-2 cursor-pointer">
-                    <input type="checkbox" id="regAgree" class="rounded bg-[#0D1117] border-[#7A9BB5]/30 text-[#C4DAE8]">
-                    <span class="text-sm text-[#C4DAE8]/80">我已阅读并同意服务条款与隐私政策</span>
-                </label>
-
-                <button onclick="handleRegister()" class="action-btn w-full py-4 bg-gradient-to-r from-[#7A9BB5] to-[#C4DAE8] text-[#0D1117] font-semibold rounded-xl hover:brightness-110 transition-all flex items-center justify-center gap-x-2">
-                    <span>创建账号</span>
-                    <div id="registerLoader" class="loader hidden"></div>
-                </button>
-            </div>
-        </div>
-    </div>
-
     <!-- HERO -->
-    <section class="min-h-screen flex items-center pt-32 md:pt-40 relative">
-        <div class="max-w-screen-2xl mx-auto px-8 grid hero-row grid-cols-2 gap-12 items-center">
+    <section class="min-h-screen flex items-center pt-24 md:pt-32 relative">
+        <div class="max-w-screen-2xl mx-auto px-8 grid hero-wrap grid-cols-2 gap-12 items-center">
             <!-- Left Content -->
             <div class="space-y-8">
                 <div class="inline-flex items-center gap-x-2 px-5 py-2 glass rounded-3xl text-sm">
@@ -570,20 +285,20 @@
                     在深空般的界面中，构建、协作、决策。融合玻璃态设计与动态光效，重新定义数字工作空间。
                 </p>
                 
-                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-x-5 gap-y-4">
+                <div class="btn-row flex items-center gap-x-5">
                     <button onclick="showDemo()" 
-                            class="action-btn px-8 py-4 bg-white text-[#0D1117] rounded-3xl font-semibold text-lg flex items-center justify-center gap-x-3 hover:scale-105 transition-transform">
+                            class="px-8 py-4 bg-white text-[#0D1117] rounded-3xl font-semibold text-lg flex items-center justify-center gap-x-3 hover:scale-105 transition-transform">
                         <span>进入控制台</span>
                         <i class="fa-solid fa-arrow-right"></i>
                     </button>
                     <button onclick="watchVideo()" 
-                            class="action-btn px-8 py-4 glass rounded-3xl font-medium flex items-center justify-center gap-x-3 hover:bg-white/10 transition-all">
+                            class="px-8 py-4 glass rounded-3xl font-medium flex items-center justify-center gap-x-3 hover:bg-white/10 transition-all">
                         <i class="fa-solid fa-play"></i>
                         <span>观看演示</span>
                     </button>
                 </div>
                 
-                <div class="stat-group flex items-center gap-x-12 pt-6">
+                <div class="stat-row flex items-center gap-x-12 pt-6">
                     <div>
                         <div id="stat-users" class="stat-number text-5xl font-semibold text-white">12480</div>
                         <div class="text-sm text-[#7A9BB5]">活跃用户</div>
@@ -604,7 +319,7 @@
                  class="hero-card glass rounded-3xl p-6 md:p-10 neon-border h-[520px] relative overflow-hidden cursor-none">
                 <!-- Card Content -->
                 <div class="relative z-10 h-full flex flex-col">
-                    <div class="flex justify-between items-start">
+                    <div class="flex justify-between items-start flex-wrap gap-4">
                         <div>
                             <div class="flex items-center gap-x-3 flex-wrap">
                                 <div class="px-4 py-1 bg-white/10 text-xs rounded-2xl backdrop-blur-md">Q3 2026</div>
@@ -697,50 +412,15 @@
             </div>
         </div>
     </section>
-    <section id="features" class="section py-32 border-t border-white/5">
-        <div class="max-w-screen-2xl mx-auto px-8">
-            <div class="text-center mb-20">
-                <div class="inline px-6 py-3 glass rounded-3xl text-sm mb-6">价格</div>
-                <h2 class="text-5xl font-semibold tracking-tight">定价</h2>
-            </div>
-            
-            <div class="grid grid-3 grid-cols-3 gap-8">
-                <!-- Card 1 -->
-                <div class="glass rounded-3xl p-8 md:p-10 neon-border group hover:scale-[1.02] transition-all duration-500">
-                    <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#7A9BB5] to-[#C4DAE8] flex items-center justify-center mb-8 text-3xl">🌌</div>
-                    <h3 class="text-3xl font-medium mb-3">基础版</h3>
-                    <p class="text-[#C4DAE8]/70">19/月</p>
-                    <div class="mt-12 text-xs uppercase tracking-widest text-[#7A9BB5] group-hover:text-white transition-colors">实时交互</div>
-                </div>
-                
-                <!-- Card 2 -->
-                <div class="glass rounded-3xl p-8 md:p-10 neon-border group hover:scale-[1.02] transition-all duration-500">
-                    <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#7A9BB5] to-[#C4DAE8] flex items-center justify-center mb-8 text-3xl">📡</div>
-                    <h3 class="text-3xl font-medium mb-3">pro版</h3>
-                    <p class="text-[#C4DAE8]/70">158/年</p>
-                    <div class="mt-12 text-xs uppercase tracking-widest text-[#7A9BB5] group-hover:text-white transition-colors">微交互</div>
-                </div>
-                
-                <!-- Card 3 -->
-                <div class="glass rounded-3xl p-8 md:p-10 neon-border group hover:scale-[1.02] transition-all duration-500">
-                    <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#7A9BB5] to-[#C4DAE8] flex items-center justify-center mb-8 text-3xl">📊</div>
-                    <h3 class="text-3xl font-medium mb-3">专业版</h3>
-                    <p class="text-[#C4DAE8]/70">400/两年</p>
-                    <div class="mt-12 text-xs uppercase tracking-widest text-[#7A9BB5] group-hover:text-white transition-colors">流畅体验</div>
-            
-                </div>
-            </div>
-        </div>
-    </section>
+
     <!-- Final CTA -->
     <section class="py-32 border-t border-white/5 relative overflow-hidden">
         <div class="max-w-screen-2xl mx-auto px-8 text-center">
             <div class="cta-card glass max-w-2xl mx-auto rounded-3xl p-16">
                 <h2 class="text-5xl font-semibold mb-6">准备好进入深空了吗？</h2>
                 <p class="text-xl text-[#C4DAE8]/80 mb-12">加入数千名先锋用户，体验下一代界面设计。</p>
-               
                 <button onclick="showDemo()" 
-                        class="action-btn px-12 py-6 text-xl font-semibold bg-white text-black rounded-3xl hover:scale-105 active:scale-95 transition-all inline-flex items-center justify-center gap-x-4">
+                        class="px-12 py-6 text-xl font-semibold bg-white text-black rounded-3xl hover:scale-105 active:scale-95 transition-all inline-flex items-center justify-center gap-x-4">
                     免费启动
                     <span class="text-2xl">→</span>
                 </button>
@@ -751,7 +431,7 @@
     <!-- Footer -->
     <footer class="glass border-t border-white/10 py-12">
         <div class="max-w-screen-2xl mx-auto px-8 text-center text-xs text-[#7A9BB5]">
-            © 2026 小y — 设计语言实验
+            © 2026 NEXUS — 设计语言实验
         </div>
     </footer>
 
@@ -767,123 +447,26 @@
 
     <script>
         // Tailwind script already included via CDN
-        function initTailwind() {}
+        
+        function initTailwind() {
+            // Already configured via CDN
+        }
 
         // ========== 移动端汉堡菜单逻辑 ==========
         const hamburgerBtn = document.getElementById('hamburgerBtn');
         const mobileNav = document.getElementById('mobileNav');
-        hamburgerBtn.addEventListener('click', ()=>{
+        hamburgerBtn.addEventListener('click', () => {
             mobileNav.classList.toggle('open');
             document.body.style.overflow = mobileNav.classList.contains('open') ? 'hidden' : '';
         })
-
-        // 弹窗内部粒子系统
-        let authCanvas, authCtx, authParticles = [];
-        function initAuthParticle(){
-            authCanvas = document.getElementById("authParticleCanvas");
-            authCtx = authCanvas.getContext("2d");
-            const wrap = document.getElementById("authWrap");
-            function resizeAuth(){
-                authCanvas.width = wrap.offsetWidth;
-                authCanvas.height = wrap.offsetHeight;
-            }
-            resizeAuth();
-            window.addEventListener("resize",resizeAuth);
-            for(let i=0;i<60;i++) authParticles.push({
-                x:Math.random()*authCanvas.width,
-                y:Math.random()*authCanvas.height,
-                s:Math.random()*1.5+0.3,
-                sx:(Math.random()-0.5)*0.2,
-                sy:(Math.random()-0.5)*0.2
-            })
-            function authLoop(){
-                authCtx.clearRect(0,0,authCanvas.width,authCanvas.height);
-                authParticles.forEach(p=>{
-                    p.x += p.sx;
-                    p.y += p.sy;
-                    if(p.x<0||p.x>authCanvas.width)p.sx*=-1;
-                    if(p.y<0||p.y>authCanvas.height)p.sy*=-1;
-                    authCtx.fillStyle = "rgba(196,218,232,0.4)";
-                    authCtx.beginPath();
-                    authCtx.arc(p.x,p.y,p.s,0,Math.PI*2);
-                    authCtx.fill();
-                })
-                requestAnimationFrame(authLoop);
-            }
-            authLoop();
+        function closeMobileNav() {
+            mobileNav.classList.remove('open');
+            document.body.style.overflow = '';
         }
-
-        // 密码强度检测
-        function checkPwdStrength(){
-            const input = document.getElementById("regPwd");
-            const bar = document.getElementById("pwdStrength");
-            const text = document.getElementById("strengthText");
-            input.addEventListener("input",()=>{
-                const val = input.value;
-                let score = 0;
-                if(val.length>=8)score+=25;
-                if(/[A-Z]/.test(val))score+=20;
-                if(/[0-9]/.test(val))score+=20;
-                if(/[!@#$%^&*]/.test(val))score+=30;
-                bar.style.width = score+"%";
-                if(score<30){
-                    bar.style.background="#ff4456";
-                    text.textContent="弱";text.style.color="#ff4456";
-                }else if(score<70){
-                    bar.style.background="#ffc145";
-                    text.textContent="中等";text.style.color="#ffc145";
-                }else{
-                    bar.style.background="#4ade80";
-                    text.textContent="高强度";text.style.color="#4ade80";
-                }
-            })
-        }
-
-        // 表单校验
-        function checkLoginForm(){
-            let pass = true;
-            const acc = document.getElementById("loginAccount");
-            const pwd = document.getElementById("loginPwd");
-            const accErr = document.getElementById("accErr");
-            const pwdErr = document.getElementById("pwdErr");
-            accErr.style.display = "none";
-            pwdErr.style.display = "none";
-            if(!acc.value.trim()){accErr.style.display="block";pass=false;}
-            if(!pwd.value.trim()){pwdErr.style.display="block";pass=false;}
-            return pass;
-        }
-        function checkRegForm(){
-            let ok = true;
-            const mail = document.getElementById("regMail");
-            const pwd = document.getElementById("regPwd");
-            const mailErr = document.getElementById("mailErr");
-            const pwdErr = document.getElementById("regPwdErr");
-            mailErr.style.display="none";pwdErr.style.display="none";
-            if(!mail.value.trim()){mailErr.style.display="block";ok=false;}
-            if(pwd.value.length<8){pwdErr.style.display="block";ok=false;}
-            if(!document.getElementById("regAgree").checked) ok=false;
-            return ok;
-        }
-
-        // 生物登录模拟
-        function bioLogin(){
-            showToast("指纹识别成功，自动登录中...");
-            setTimeout(()=>{
-                closeLogin();
-                createSuccessPulse();
-                showToast("生物解锁登录成功！");
-            },1200)
-        }
-        // 登录成功全屏脉冲
-        function createSuccessPulse(){
-            const div = document.createElement("div");
-            div.className = "success-pulse";
-            document.body.appendChild(div);
-            setTimeout(()=>div.remove(),1200);
-        }
-
+        
         // Particle System
         let canvas, ctx, particles = [];
+        
         class Particle {
             constructor() {
                 this.x = Math.random() * window.innerWidth;
@@ -892,19 +475,26 @@
                 this.speedX = Math.random() * 0.4 - 0.2;
                 this.speedY = Math.random() * 0.4 - 0.2;
             }
+            
             update(mouseX, mouseY) {
                 const dx = mouseX - this.x;
                 const dy = mouseY - this.y;
                 const distance = Math.sqrt(dx * dx + dy * dy);
-                if (distance < 220) {
+                // 手机缩短感应距离，减少计算
+                const touchRange = window.innerWidth < 768 ? 120 : 220;
+                if (distance < touchRange) {
                     this.speedX += dx * 0.0008;
                     this.speedY += dy * 0.0008;
                 }
+                
                 this.x += this.speedX;
                 this.y += this.speedY;
+                
+                // Gentle boundaries
                 if (this.x < 0 || this.x > window.innerWidth) this.speedX *= -1;
                 if (this.y < 0 || this.y > window.innerHeight) this.speedY *= -1;
             }
+            
             draw() {
                 ctx.fillStyle = 'rgba(196, 218, 232, 0.65)';
                 ctx.beginPath();
@@ -912,34 +502,228 @@
                 ctx.fill();
             }
         }
+        
         function initParticles() {
             canvas = document.getElementById('particleCanvas');
             ctx = canvas.getContext('2d');
+            
             function resize() {
                 canvas.width = window.innerWidth;
                 canvas.height = window.innerHeight;
             }
             resize();
             window.addEventListener('resize', resize);
-            // 手机减少粒子数量，提升性能
-            const totalParticles = window.innerWidth < 768 ? 90 : 180;
-            for (let i = 0; i < totalParticles; i++) particles.push(new Particle());
+            
+            // 手机减少粒子数量，提升流畅度
+            const total = window.innerWidth < 768 ? 90 : 180;
+            for (let i = 0; i < total; i++) {
+                particles.push(new Particle());
+            }
         }
+        
         let mouseX = 0, mouseY = 0;
+        
         function animateParticles() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw connections
             ctx.strokeStyle = 'rgba(122, 155, 181, 0.1)';
             ctx.lineWidth = 0.8;
-            const connectDist = window.innerWidth < 768 ? 60 : 110;
+            const lineDist = window.innerWidth < 768 ? 60 : 110;
+            
             for (let i = 0; i < particles.length; i++) {
                 const p1 = particles[i];
                 p1.update(mouseX, mouseY);
                 p1.draw();
+                
                 for (let j = i + 1; j < particles.length; j++) {
                     const p2 = particles[j];
                     const dx = p1.x - p2.x;
                     const dy = p1.y - p2.y;
                     const dist = Math.sqrt(dx * dx + dy * dy);
-                    if (dist < connectDist) {
-                        ctx.globalAlpha = (connectDist - dist) / connectDist;
-                        ctx.beginPath
+                    
+                    if (dist < lineDist) {
+                        ctx.globalAlpha = (lineDist - dist) / lineDist;
+                        ctx.beginPath();
+                        ctx.moveTo(p1.x, p1.y);
+                        ctx.lineTo(p2.x, p2.y);
+                        ctx.stroke();
+                    }
+                }
+            }
+            
+            ctx.globalAlpha = 1;
+            requestAnimationFrame(animateParticles);
+        }
+        
+        // Mouse tracking for hero card
+        function initHeroCard() {
+            const card = document.getElementById('heroCard');
+            const highlight = document.getElementById('highlight');
+            
+            card.addEventListener('mousemove', (e) => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                // Move highlight
+                const percentX = (x / rect.width) * 100;
+                const percentY = (y / rect.height) * 100;
+                
+                highlight.style.left = `${percentX}%`;
+                highlight.style.top = `${percentY}%`;
+                
+                // Slight card tilt
+                const rotX = (y - rect.height / 2) / 25;
+                const rotY = (rect.width / 2 - x) / 25;
+                card.style.transform = `perspective(1000px) rotateX(${-rotX}deg) rotateY(${rotY}deg)`;
+            });
+            
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg)`;
+            });
+        }
+        
+        // Counter animation
+        function animateCounters() {
+            const counters = [
+                {el: document.getElementById('stat-users'), target: 12480},
+                {el: document.getElementById('stat-projects'), target: 8742},
+                {el: document.getElementById('stat-uptime'), target: 99.98}
+            ];
+            
+            counters.forEach(({el, target}) => {
+                let start = 0;
+                const duration = 2200;
+                const increment = target / (duration / 16);
+                
+                const timer = setInterval(() => {
+                    start += increment;
+                    if (start >= target) {
+                        if (target === 99.98) {
+                            el.textContent = target;
+                        } else {
+                            el.textContent = Math.floor(target);
+                        }
+                        clearInterval(timer);
+                    } else {
+                        if (target === 99.98) {
+                            el.textContent = start.toFixed(2);
+                        } else {
+                            el.textContent = Math.floor(start);
+                        }
+                    }
+                }, 16);
+            });
+        }
+        
+        // Scroll reveal
+        function initScrollReveal() {
+            const sections = document.querySelectorAll('.section');
+            
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                    }
+                });
+            }, {
+                threshold: 0.15,
+                rootMargin: "0px 0px -80px 0px"
+            });
+            
+            sections.forEach(section => observer.observe(section));
+        }
+        
+        // Modals
+        function toggleSearch() {
+            const modal = document.getElementById('searchModal');
+            modal.classList.toggle('hidden');
+            if (!modal.classList.contains('hidden')) {
+                setTimeout(() => {
+                    document.getElementById('searchInput').focus();
+                }, 200);
+            }
+        }
+        
+        function toggleSettings() {
+            alert("⚙️ 设置面板 (演示)");
+        }
+        
+        function showLogin() {
+            alert("欢迎回到 NEXUS ✨");
+        }
+        
+        function showDemo() {
+            const msg = document.createElement('div');
+            msg.style.position = 'fixed';
+            msg.style.bottom = '40px';
+            msg.style.left = '50%';
+            msg.style.transform = 'translateX(-50%)';
+            msg.style.background = 'rgba(122,155,181,0.95)';
+            msg.style.color = '#0D1117';
+            msg.style.padding = '16px 32px';
+            msg.style.borderRadius = '9999px';
+            msg.style.zIndex = '200';
+            msg.style.whiteSpace = 'nowrap';
+            msg.textContent = '🚀 已进入演示模式（此为静态HTML展示）';
+            document.body.appendChild(msg);
+            
+            setTimeout(() => {
+                msg.style.transition = 'all 0.6s ease';
+                msg.style.opacity = '0';
+                setTimeout(() => msg.remove(), 600);
+            }, 2800);
+        }
+        
+        function watchVideo() {
+            alert("📹 视频演示加载中...\n\n（本页面为完整可交互HTML演示）");
+        }
+        
+        // Live metric pulse
+        function liveMetricPulse() {
+            let val = 87.4;
+            const el = document.getElementById('liveMetric');
+            
+            setInterval(() => {
+                val += (Math.random() * 0.6 - 0.3);
+                if (val > 92) val = 89;
+                if (val < 84) val = 86;
+                el.textContent = val.toFixed(1);
+            }, 1800);
+        }
+        
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.key === '/' && document.getElementById('searchModal').classList.contains('hidden')) {
+                e.preventDefault();
+                toggleSearch();
+            }
+            if (e.key === "Escape") {
+                const modal = document.getElementById('searchModal');
+                if (!modal.classList.contains('hidden')) modal.classList.add('hidden');
+                // 关闭移动端菜单
+                closeMobileNav();
+            }
+        });
+        
+        // Initialize everything
+        window.onload = function() {
+            initParticles();
+            animateParticles();
+            initHeroCard();
+            animateCounters();
+            initScrollReveal();
+            liveMetricPulse();
+            
+            // Mouse tracking for particles
+            document.addEventListener('mousemove', (e) => {
+                mouseX = e.clientX;
+                mouseY = e.clientY;
+            });
+            
+            console.log('%cNEXUS 深空界面已就绪 ✨', 'color:#7A9BB5; font-family:monospace; font-size:13px');
+        };
+    </script>
+</body>
+</html>
