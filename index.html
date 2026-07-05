@@ -2,1315 +2,1000 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <!-- 移动端视口核心适配：禁止缩放、占满屏幕、设置理想视口 -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <meta name="format-detection" content="telephone=no">
-    <title>Soul Nebula: 自由音乐版</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEXUS • 深空界面</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
     <style>
-        /* --- 基础设定 --- */
-        body { 
-            margin: 0; overflow: hidden; 
-            background-color: #02020a; 
-            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif; 
-            user-select: none;
-            cursor: grab; /* 拖动光标-桌面 */
-            touch-action: none; /* 禁止浏览器默认触摸行为（滚动/缩放），核心！ */
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&amp;display=swap');
+        
+        :root {
+            --ice-blue: #7A9BB5;
+            --light-purple: #C4DAE8;
+            --danger-red: #ff6b7b;
+            --success-green: #4ade80;
         }
-        body.dragging { cursor: grabbing; } /* 拖动中光标-桌面 */
-        body.zoom-pause { cursor: default; } /* 放大停留时光标-桌面 */
-        canvas { display: block; width: 100vw; height: 100vh; } /* 画布占满视口-移动端核心 */
         
-        /* 原始视频源隐藏（直接删除也可，保留避免报错） */
-        #input_video { display: none; }
+        * {
+            font-family: 'Space Grotesk', system-ui, sans-serif;
+        }
         
-        /* 隐藏的文件输入框 */
-        #music-upload { display: none; }
-
-        /* --- UI 容器 移动端自适应 --- */
-        #hud {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        body {
+            background: radial-gradient(at center bottom, #0D1117 0%, #0A0F1A 100%);
+            color: #C4DAE8;
+            overflow-x: hidden;
+            position: relative;
+        }
+        /* 全局流动星云背景动画 */
+        body::before{
+            content:"";
+            position:fixed;
+            width:100%;
+            height:100%;
+            background: radial-gradient(30% 40% at 20% 20%, rgba(122,155,181,0.08) 0%, transparent 60%),
+            radial-gradient(35% 35% at 80% 70%, rgba(196,218,232,0.06) 0%, transparent 60%);
+            animation: nebulaMove 25s linear infinite alternate;
+            z-index:-2;
+        }
+        @keyframes nebulaMove {
+            0% { transform: translate(0,0) scale(1); }
+            100% { transform: translate(40px,-30px) scale(1.1); }
+        }
+        
+        .glass {
+            background: rgba(13, 17, 23, 0.65);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(122, 155, 181, 0.25);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4),
+                        inset 0 0 40px rgba(122, 155, 181, 0.08);
+        }
+        
+        .neon-border {
+            position: relative;
+        }
+        
+        .neon-border::before {
+            content: '';
+            position: absolute;
+            inset: -2px;
+            background: linear-gradient(45deg, 
+                rgba(122, 155, 181, 0.6), 
+                rgba(196, 218, 232, 0.4), 
+                rgba(122, 155, 181, 0.6));
+            filter: blur(12px);
+            z-index: -1;
+            opacity: 0.6;
+            border-radius: inherit;
+            transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+        /* 登录框扫描流动光 */
+        .auth-scan::after{
+            content:"";
+            position:absolute;
+            inset:0;
+            border-radius:inherit;
+            background: linear-gradient(90deg,transparent,rgba(196,218,232,0.2),transparent);
+            animation: scanFlow 3.5s linear infinite;
+        }
+        @keyframes scanFlow{
+            0%{transform:translateX(-100%)}
+            100%{transform:translateX(100%)}
+        }
+        
+        .hero-card {
+            transition: transform 0.1s linear, box-shadow 0.3s ease;
+        }
+        
+        .particle-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
             pointer-events: none;
-            display: flex; flex-direction: column; justify-content: space-between;
-            /* 移动端内边距自适应，替换固定30px为百分比+固定值 */
-            padding: clamp(15px, 4vw, 30px); 
-            box-sizing: border-box;
-            z-index: 10;
-            transition: opacity 0.5s;
         }
-
-        /* 沉浸模式下隐藏 HUD */
-        body.clean-mode #hud,
-        body.clean-mode .lil-gui {
-            opacity: 0 !important;
-            pointer-events: none !important;
-        }
-
-        h1 { 
-            margin: 0; color: #fff; 
-            /* 字体大小自适应：移动端小，桌面端大 */
-            font-size: clamp(18px, 5vw, 24px); 
-            font-weight: 300; 
-            letter-spacing: clamp(3px, 1.5vw, 6px); 
-            text-transform: uppercase; 
-            text-shadow: 0 0 30px rgba(100, 150, 255, 0.6);
-        }
-        .sub-text { 
-            /* 副标题字体/间距自适应 */
-            font-size: clamp(12px, 3vw, 14px); 
-            color: #b0cfff; margin-top: clamp(8px, 2vw, 12px); 
-            letter-spacing: clamp(1px, 0.5vw, 2px); 
-            opacity: 0.85; font-weight: 400;
-            line-height: 1.5; /* 移动端增加行高，避免文字重叠 */
-        }
-        .highlight { color: #00ffea; font-weight: bold; margin: 0 2px; text-shadow: 0 0 10px #00ffea80;}
-
-        /* 按钮组 移动端自适应 */
-        .controls-row {
-            margin-top: clamp(10px, 2.5vw, 15px);
-            display: flex;
-            gap: clamp(10px, 2.5vw, 15px);
-            pointer-events: auto;
-            flex-wrap: wrap; /* 移动端屏幕窄时按钮自动换行 */
-        }
-
-        .hud-btn {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            color: #fff;
-            /* 按钮内边距/字体自适应 */
-            padding: clamp(6px, 2vw, 8px) clamp(12px, 3vw, 16px);
-            cursor: pointer;
-            font-size: clamp(10px, 2.2vw, 12px);
-            letter-spacing: clamp(1px, 0.5vw, 2px);
-            transition: 0.3s;
-            text-transform: uppercase;
-            backdrop-filter: blur(5px);
-            border-radius: 4px; /* 移动端增加圆角，更贴合设计 */
-            flex-shrink: 0; /* 防止按钮被挤压 */
-        }
-        .hud-btn:hover, .hud-btn.touch-hover { 
-            background: rgba(0, 255, 234, 0.2); 
-            border-color: #00ffea; 
-            color: #00ffea; 
+        /* 弹窗内部粒子画布 */
+        .auth-particle{
+            position:absolute;
+            inset:0;
+            z-index:0;
+            pointer-events:none;
         }
         
-        /* 音乐播放时的状态 */
-        .hud-btn.playing {
-            border-color: #00ffea;
-            box-shadow: 0 0 10px rgba(0, 255, 234, 0.3);
-            color: #00ffea;
+        .nav-link {
+            position: relative;
+            transition: color 0.3s ease;
+        }
+        
+        .nav-link:after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 1.5px;
+            bottom: -2px;
+            left: 0;
+            background: linear-gradient(to right, #7A9BB5, #C4DAE8);
+            transition: width 0.4s cubic-bezier(0.25, 0.1, 0.25, 1);
+        }
+        
+        .nav-link:hover:after {
+            width: 100%;
+        }
+        
+        .section {
+            opacity: 0;
+            transform: translateY(60px);
+            transition: all 0.8s cubic-bezier(0.25, 0.1, 0.25, 1);
+        }
+        
+        .section.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .stat-number {
+            font-variant-numeric: tabular-nums;
         }
 
-        /* 移除摄像头相关的状态指示器（直接隐藏） */
-        #hand-status { display: none !important; }
-
-        /* 进度条 移动端居中自适应 */
-        #dissolve-bar-container {
-            position: absolute; 
-            bottom: clamp(80px, 15vw, 120px); /* 移动端上移进度条，避免被遮挡 */
-            left: 50%; transform: translateX(-50%);
-            width: clamp(150px, 40vw, 200px); /* 宽度自适应 */
-            height: 4px; background: rgba(255,255,255,0.1);
-            border-radius: 2px; overflow: hidden; opacity: 0; transition: opacity 0.3s;
-            z-index: 11;
+        /* 登录弹窗动画 */
+        .auth-modal {
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
         }
-        #dissolve-bar {
-            width: 0%; height: 100%; background: #00ffea; 
-            box-shadow: 0 0 10px #00ffea;
+        .auth-modal.active {
+            opacity: 1;
+            visibility: visible;
         }
-
-        /* 移除自定义手势光标（直接隐藏） */
-        #cursor { display: none !important; }
-
-        /* 加载层 移动端适配 */
-        #loading-overlay {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: #02020a; z-index: 999;
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
-            color: #fff; 
-            letter-spacing: clamp(4px, 2vw, 8px); 
-            font-size: clamp(14px, 3.5vw, 16px); 
-            font-weight: 300;
-            transition: opacity 1.5s ease-out;
-            pointer-events: auto; 
-            cursor: pointer;
-            touch-action: none;
+        .auth-content {
+            transform: translateY(30px) scale(0.95);
+            transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+            position:relative;
+            overflow:hidden;
         }
-        #loading-overlay span {
-            margin-top: clamp(15px, 4vw, 20px); 
-            font-size: clamp(10px, 2.5vw, 12px); 
-            opacity: 0.6; 
-            letter-spacing: clamp(1px, 0.5vw, 2px);
+        .auth-modal.active .auth-content {
+            transform: translateY(0) scale(1);
         }
 
-        /* --- 文本编辑器 Modal 移动端全屏适配 --- */
-        #editor-modal {
-            display: none;
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85);
-            z-index: 200;
-            justify-content: center; align-items: flex-start; /* 移动端上对齐，避免键盘遮挡 */
-            padding-top: clamp(20px, 5vw, 30px);
-            backdrop-filter: blur(10px);
-            pointer-events: auto;
-            overflow-y: auto; /* 移动端允许滚动 */
+        /* 科技感输入框 */
+        .tech-input {
+            background: rgba(13, 17, 23, 0.4);
+            border: 1px solid rgba(122, 155, 181, 0.2);
+            transition: all 0.3s ease;
+            position:relative;
+            overflow:hidden;
         }
-        #editor-container {
-            width: clamp(280px, 90%, 600px); /* 最大600px，最小280px，适配小屏手机 */
-            background: #111; border: 1px solid #333;
-            padding: clamp(20px, 5vw, 30px); 
-            box-shadow: 0 0 50px rgba(0,0,0,0.5);
-            border-radius: 8px; /* 移动端增加圆角 */
-            margin: 0 auto;
+        /* 输入波纹特效 */
+        .tech-input:focus::after{
+            content:"";
+            position:absolute;
+            width:100%;
+            height:100%;
+            left:0;top:0;
+            background: radial-gradient(circle, rgba(196,218,232,0.15) 0%, transparent 70%);
+            animation: inputRipple 1s ease-out forwards;
         }
-        #editor-container h2 { 
-            color: #fff; margin-top: 0; font-weight: 300; 
-            letter-spacing: clamp(2px, 1vw, 4px); 
-            font-size: clamp(16px, 4vw, 20px);
+        @keyframes inputRipple{
+            0%{transform:scale(0);opacity:1;}
+            100%{transform:scale(2);opacity:0;}
         }
-        #text-input {
-            width: 100%; 
-            height: clamp(200px, 40vh, 300px); /* 高度适配，占屏幕40%最大 */
-            background: #050505; border: 1px solid #333;
-            color: #ccc; padding: clamp(10px, 2.5vw, 15px);
-            font-family: monospace; 
-            font-size: clamp(12px, 3vw, 14px); 
-            line-height: 1.5;
-            resize: vertical; box-sizing: border-box;
-            border-radius: 4px;
+        .tech-input:focus {
+            border-color: rgba(196, 218, 232, 0.6);
+            box-shadow: 0 0 15px rgba(122, 155, 181, 0.15);
         }
-        .btn-group { 
-            margin-top: clamp(15px, 4vw, 20px); 
-            display: flex; justify-content: flex-end; gap: clamp(8px, 2vw, 10px); 
-        }
-        .modal-btn {
-            /* 弹窗按钮适配 */
-            padding: clamp(8px, 2.5vw, 10px) clamp(20px, 5vw, 25px); 
-            border: none; cursor: pointer;
-            font-weight: bold; letter-spacing: 1px;
-            border-radius: 4px;
-            font-size: clamp(12px, 3vw, 14px);
-        }
-        .btn-save { background: #00ffea; color: #000; }
-        .btn-cancel { background: transparent; color: #fff; border: 1px solid #555; }
 
-        /* 移除摄像头预览窗口（直接隐藏） */
-        #camera-preview-container { display: none !important; }
+        /* 切换按钮样式 */
+        .tab-btn {
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, #7A9BB5, #C4DAE8);
+        }
 
-        @keyframes fadeIn { from { opacity: 0; transform: scaleX(-1) translateY(20px); } to { opacity: 1; transform: scaleX(-1) translateY(0); } }
-
-        /* lil-gui 移动端自适应宽度 */
-        .lil-gui { --width: clamp(220px, 60vw, 280px); transition: opacity 0.5s; }
+        /* 加载动画 */
+        .loader {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(196, 218, 232, 0.3);
+            border-top: 2px solid #C4DAE8;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        /* 密码强度条 */
+        .pwd-bar{
+            height:4px;
+            border-radius:2px;
+            transition:all 0.3s;
+            background:#222;
+            margin-top:6px;
+        }
+        /* 生物识别按钮 */
+        .bio-btn{
+            width:50px;height:50px;
+            glass rounded-xl flex items-center justify-center mx-auto mt-4
+        }
+        /* 顶部全局状态栏 */
+        .status-bar{
+            position:fixed;
+            top:0;left:0;right:0;
+            height:24px;
+            background:rgba(13,17,23,0.9);
+            z-[60];
+            border-bottom:1px solid rgba(122,155,181,0.15);
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            gap-10;
+            font-size:11px;
+            color:#7A9BB5;
+        }
+        nav{top:24px !important;}
+        /* 登录成功全屏脉冲 */
+        .success-pulse{
+            position:fixed;
+            inset:0;
+            pointer-events:none;
+            background:radial-gradient(circle, rgba(196,218,232,0.2) 0%, transparent 70%);
+            z-index:999;
+            animation:pulseExpand 1.2s ease-out forwards;
+        }
+        @keyframes pulseExpand{
+            0%{transform:scale(0);opacity:1;}
+            100%{transform:scale(3);opacity:0;}
+        }
+        /* 表单错误提示 */
+        .error-hint{
+            color:var(--danger-red);
+            font-size:12px;
+            margin-top:4px;
+            display:none;
+        }
     </style>
 </head>
-<body>
-
-    <video id="input_video"></video>
-    <div id="cursor"></div>
-    
-    <input type="file" id="music-upload" accept="audio/*">
-
-    <div id="loading-overlay" onclick="startExperience()" ontouchstart="startExperience()">
-        <div>点击/触摸任意处启动系统</div>
-        <span>初始化音效引擎...</span>
+<body class="min-h-screen">
+    <!-- 顶部全局实时状态栏 -->
+    <div class="status-bar">
+        <span><i class="fa-solid fa-wifi text-emerald-400 animate-pulse"></i> 节点在线</span>
+        <span>加密通道 AES-256</span>
+        <span>延迟 12ms</span>
+        <span>服务器 Q3-2026</span>
     </div>
+    <!-- Particle Canvas -->
+    <canvas id="particleCanvas" class="particle-bg"></canvas>
 
-    <div id="editor-modal">
-        <div id="editor-container">
-            <p style="color:#888; font-size:clamp(10px,2.5vw,12px); margin-bottom:10px;">每行一段文字，星云将随机抽取生成。</p>
-            <textarea id="text-input"></textarea>
-            <div class="btn-group">
-                <button class="modal-btn btn-cancel" onclick="closeEditor()" ontouchstart="closeEditor()">取消</button>
-                <button class="modal-btn btn-save" onclick="saveText()" ontouchstart="saveText()">保存并重组</button>
+    <!-- Navbar -->
+    <nav class="fixed top-0 left-0 right-0 z-50 glass border-b border-white/10">
+        <div class="max-w-screen-2xl mx-auto px-8 py-5 flex items-center justify-between">
+            <!-- Left Menu -->
+            <div class="flex items-center gap-x-10 text-sm font-medium">
+                <a href="#" class="nav-link text-white/90 hover:text-[#C4DAE8]">产品</a>
+                <a href="#" class="nav-link text-white/90 hover:text-[#C4DAE8]">特性</a>
+                <a href="#" class="nav-link text-white/90 hover:text-[#C4DAE8]">解决方案</a>
+                <a href="#" class="nav-link text-white/90 hover:text-[#C4DAE8]">定价</a>
+            </div>
+
+            <!-- Logo -->
+            <div class="flex items-center gap-x-3">
+                <div class="w-7 h-7 rounded-full bg-gradient-to-br from-[#7A9BB5] to-[#C4DAE8] flex items-center justify-center text-[#0D1117] font-bold text-xl leading-none pt-0.5">N</div>
+                <span class="text-2xl font-semibold tracking-tighter text-white">小y</span>
+            </div>
+
+            <!-- Right Icons -->
+            <div class="flex items-center gap-x-6">
+                <button onclick="toggleSearch()" 
+                        class="w-10 h-10 flex items-center justify-center text-[#7A9BB5] hover:text-white transition-all hover:scale-110 active:scale-95">
+                    <i class="fa-solid fa-magnifying-glass text-xl"></i>
+                </button>
+                <button onclick="toggleSettings()"
+                        class="w-10 h-10 flex items-center justify-center text-[#7A9BB5] hover:text-white transition-all hover:scale-110 active:scale-95">
+                    <i class="fa-solid fa-cog text-xl"></i>
+                </button>
+                <button onclick="showLogin()"
+                        class="px-6 py-2.5 glass rounded-2xl text-sm font-medium border border-[#7A9BB5]/30 hover:border-[#C4DAE8] transition-all">
+                    登录
+                </button>
+                <button onclick="showDemo()"
+                        class="px-6 py-2.5 bg-gradient-to-r from-[#7A9BB5] to-[#C4DAE8] text-[#0D1117] font-semibold rounded-2xl text-sm hover:brightness-110 transition-all">
+                    立即体验
+                </button>
             </div>
         </div>
-    </div>
+    </nav>
 
-    <div id="hud">
-        <div class="top-bar">
-            <div>
-                <h1>lizerui</h1>
-                <div class="sub-text">
-                    luo<span class="highlight">x</span>yu/  <span class="highlight">技术</span>  /  <span class="highlight">不够</span>还请见谅  / 
+    <!-- 登录注册弹窗 - 高级科技感升级 -->
+    <div id="authModal" class="auth-modal fixed inset-0 z-[200] flex items-center justify-center bg-black/70 backdrop-blur-xl">
+        <div id="authWrap" class="auth-content glass neon-border auth-scan w-full max-w-lg rounded-3xl p-10 relative">
+            <!-- 弹窗内部专属粒子 -->
+            <canvas id="authParticleCanvas" class="auth-particle"></canvas>
+            <!-- 关闭按钮 -->
+            <button onclick="closeLogin()" class="absolute top-6 right-6 w-8 h-8 flex items-center justify-center text-[#7A9BB5] hover:text-white transition-all z-10">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+
+            <!-- Logo -->
+            <div class="flex justify-center mb-8 relative z-10">
+                <div class="flex items-center gap-x-3">
+                    <div class="w-8 h-8 rounded-full bg-gradient-to-br from-[#7A9BB5] to-[#C4DAE8] flex items-center justify-center text-[#0D1117] font-bold text-xl">N</div>
+                    <span class="text-2xl font-semibold text-white">NEXUS</span>
                 </div>
-                <div class="controls-row">
             </div>
-            <div style="width: clamp(100px, 25vw, 200px);"></div> <!-- 占位符自适应 -->
+
+            <!-- 切换标签 -->
+            <div class="flex justify-center gap-x-12 mb-10 relative z-10">
+                <button id="loginTab" class="tab-btn active text-lg font-medium text-white">登录</button>
+                <button id="registerTab" class="tab-btn text-lg font-medium text-[#7A9BB5]">注册</button>
+            </div>
+
+            <!-- 登录表单 -->
+            <div id="loginForm" class="space-y-6 relative z-10">
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-sm text-[#7A9BB5] block mb-2">账号 / 邮箱</label>
+                        <input id="loginAccount" type="text" class="tech-input w-full px-5 py-3.5 rounded-xl text-white outline-none" placeholder="请输入您的账号或邮箱">
+                        <div class="error-hint" id="accErr">账号不能为空</div>
+                    </div>
+                    <div>
+                        <label class="text-sm text-[#7A9BB5] block mb-2">密码</label>
+                        <input id="loginPwd" type="password" class="tech-input w-full px-5 py-3.5 rounded-xl text-white outline-none" placeholder="请输入密码">
+                        <div class="error-hint" id="pwdErr">密码不能为空</div>
+                    </div>
+                </div>
+                <!-- 生物识别快捷登录 -->
+                <button class="bio-btn glass w-full py-3 rounded-xl flex items-center justify-center gap-3 hover:bg-white/10 transition-all" onclick="bioLogin()">
+                    <i class="fa-solid fa-fingerprint text-xl"></i>
+                    <span>生物快捷解锁</span>
+                </button>
+
+                <div class="flex justify-between items-center">
+                    <label class="flex items-center gap-x-2 cursor-pointer">
+                        <input type="checkbox" id="rememberAcc" class="rounded bg-[#0D1117] border-[#7A9BB5]/30 text-[#C4DAE8]">
+                        <span class="text-sm text-[#C4DAE8]/80">记住我</span>
+                    </label>
+                    <a href="#" class="text-sm text-[#7A9BB5] hover:text-[#C4DAE8] transition-colors">忘记密码？</a>
+                </div>
+
+                <button onclick="handleLogin()" class="w-full py-4 bg-gradient-to-r from-[#7A9BB5] to-[#C4DAE8] text-[#0D1117] font-semibold rounded-xl hover:brightness-110 transition-all flex items-center justify-center gap-x-2">
+                    <span>安全登录</span>
+                    <div id="loginLoader" class="loader hidden"></div>
+                </button>
+
+                <div class="text-center text-xs text-[#7A9BB5]">
+                    登录即表示您同意 <a href="#" class="text-[#C4DAE8]">服务条款</a> 和 <a href="#" class="text-[#C4DAE8]">隐私政策</a>
+                </div>
+            </div>
+
+            <!-- 注册表单（无验证码） -->
+            <div id="registerForm" class="space-y-6 hidden relative z-10">
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-sm text-[#7A9BB5] block mb-2">邮箱</label>
+                        <input id="regMail" type="email" class="tech-input w-full px-5 py-3.5 rounded-xl text-white outline-none" placeholder="请输入您的邮箱">
+                        <div class="error-hint" id="mailErr">邮箱不能为空</div>
+                    </div>
+                    <div>
+                        <label class="text-sm text-[#7A9BB5] block mb-2">设置密码</label>
+                        <input id="regPwd" type="password" class="tech-input w-full px-5 py-3.5 rounded-xl text-white outline-none" placeholder="请设置8-20位密码">
+                        <div class="pwd-bar" id="pwdStrength"></div>
+                        <div class="text-xs mt-1" id="strengthText">密码强度</div>
+                        <div class="error-hint" id="regPwdErr">密码长度不足8位</div>
+                    </div>
+                </div>
+
+                <label class="flex items-center gap-x-2 cursor-pointer">
+                    <input type="checkbox" id="regAgree" class="rounded bg-[#0D1117] border-[#7A9BB5]/30 text-[#C4DAE8]">
+                    <span class="text-sm text-[#C4DAE8]/80">我已阅读并同意服务条款与隐私政策</span>
+                </label>
+
+                <button onclick="handleRegister()" class="w-full py-4 bg-gradient-to-r from-[#7A9BB5] to-[#C4DAE8] text-[#0D1117] font-semibold rounded-xl hover:brightness-110 transition-all flex items-center justify-center gap-x-2">
+                    <span>创建账号</span>
+                    <div id="registerLoader" class="loader hidden"></div>
+                </button>
+            </div>
         </div>
-        <div id="dissolve-bar-container"><div id="dissolve-bar"></div></div>
     </div>
 
-    <script type="importmap">
-        {
-            "imports": {
-                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
-            }
-        }
-    </script>
-
-    <script type="module">
-        import * as THREE from 'three';
-        import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
-        import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
-        import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
-        import GUI from 'three/addons/libs/lil-gui.module.min.js'; 
-
-        // --- 音频系统 (新增单击专属音效) ---
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        let isAudioStarted = false;
-        let bgmElement = new Audio(); // 用户音乐播放器
-        bgmElement.loop = true;
-
-        // 监听用户上传音乐
-        document.getElementById('music-upload').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                const url = URL.createObjectURL(file);
-                bgmElement.src = url;
-                bgmElement.volume = 0.5; // 默认音量
-                bgmElement.play().then(() => {
-                    const btn = document.getElementById('music-btn');
-                    btn.innerText = "正在播放: " + (file.name.length > 8 ? file.name.substring(0,8)+"..." : file.name);
-                    btn.classList.add('playing');
-                }).catch(err => console.error("播放失败", err));
-            }
-        });
-
-        // 播放合成音效 (悬停/单击/爆炸 三种)
-        function playSound(type) {
-            if(!isAudioStarted) return;
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-
-            const now = audioCtx.currentTime;
-
-            if (type === 'hover') {
-                // 高频微弱的哔声
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(800, now);
-                osc.frequency.exponentialRampToValueAtTime(1200, now + 0.1);
-                gain.gain.setValueAtTime(0.05, now);
-                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
-                osc.start(now);
-                osc.stop(now + 0.1);
-            } else if (type === 'click-zoom') {
-                // 单击放大：柔和的中频上升音，更轻量
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(400, now);
-                osc.frequency.exponentialRampToValueAtTime(600, now + 0.2);
-                gain.gain.setValueAtTime(0.08, now);
-                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
-                osc.start(now);
-                osc.stop(now + 0.2);
-            } else if (type === 'explode') {
-                // 爆炸白噪/低频扫描
-                osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(100, now);
-                osc.frequency.exponentialRampToValueAtTime(10, now + 0.5);
-                gain.gain.setValueAtTime(0.3, now);
-                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
-                osc.start(now);
-                osc.stop(now + 0.8);
-            }
-        }
+    <!-- HERO -->
+    <section class="min-h-screen flex items-center pt-32 relative">
+        <div class="max-w-screen-2xl mx-auto px-8 grid grid-cols-2 gap-12 items-center">
+            <!-- Left Content -->
+            <div class="space-y-8">
+                <div class="inline-flex items-center gap-x-2 px-5 py-2 glass rounded-3xl text-sm">
+                    <div class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
+                    <span class="text-[#C4DAE8]">实时同步 • 量子安全</span>
+                </div>
+                
+                <h1 class="text-7xl font-semibold tracking-tighter leading-none text-white">
+                    下一代<br>智能协作平台
+                </h1>
+                
+                <p class="text-xl text-[#C4DAE8]/80 max-w-md">
+                    在深空般的界面中，构建、协作、决策。融合玻璃态设计与动态光效，重新定义数字工作空间。
+                </p>
+                
+                <div class="flex items-center gap-x-5">
+                    <button onclick="showDemo()" 
+                            class="px-8 py-4 bg-white text-[#0D1117] rounded-3xl font-semibold text-lg flex items-center gap-x-3 hover:scale-105 transition-transform">
+                        <span>进入控制台</span>
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                    <button onclick="watchVideo()" 
+                            class="px-8 py-4 glass rounded-3xl font-medium flex items-center gap-x-3 hover:bg-white/10 transition-all">
+                        <i class="fa-solid fa-play"></i>
+                        <span>观看演示</span>
+                    </button>
+                </div>
+                
+                <div class="flex items-center gap-x-12 pt-6">
+                    <div>
+                        <div id="stat-users" class="stat-number text-5xl font-semibold text-white">12480</div>
+                        <div class="text-sm text-[#7A9BB5]">活跃用户</div>
+                    </div>
+                    <div>
+                        <div id="stat-projects" class="stat-number text-5xl font-semibold text-white">8742</div>
+                        <div class="text-sm text-[#7A9BB5]">项目交付</div>
+                    </div>
+                    <div>
+                        <div id="stat-uptime" class="stat-number text-5xl font-semibold text-white">99.98</div>
+                        <div class="text-sm text-[#7A9BB5]">系统可用性</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Glass Hero Card -->
+            <div id="heroCard" 
+                 class="hero-card glass rounded-3xl p-10 neon-border h-[520px] relative overflow-hidden cursor-none">
+                <!-- Card Content -->
+                <div class="relative z-10 h-full flex flex-col">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <div class="flex items-center gap-x-3">
+                                <div class="px-4 py-1 bg-white/10 text-xs rounded-2xl backdrop-blur-md">Q3 2026</div>
+                                <div class="text-emerald-400 text-sm font-medium flex items-center gap-x-1">
+                                    <i class="fa-solid fa-circle-check"></i>
+                                    <span>在线</span>
+                                </div>
+                            </div>
+                            <h2 class="text-4xl font-semibold mt-6 leading-none">核心指标</h2>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-6xl font-bold text-[#C4DAE8]" id="liveMetric">87.4</div>
+                            <div class="text-sm text-[#7A9BB5]">性能指数</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Fake Chart -->
+                    <div class="flex-1 flex items-end gap-x-2 mt-12 relative">
+                        <div class="flex-1 h-40 bg-gradient-to-t from-[#7A9BB5]/30 to-transparent rounded-t-2xl"></div>
+                        <div class="flex-1 h-52 bg-gradient-to-t from-[#7A9BB5]/40 to-transparent rounded-t-2xl"></div>
+                        <div class="flex-1 h-36 bg-gradient-to-t from-[#7A9BB5]/30 to-transparent rounded-t-2xl"></div>
+                        <div class="flex-1 h-64 bg-gradient-to-t from-[#C4DAE8]/50 to-transparent rounded-t-2xl relative">
+                            <div class="absolute -top-6 left-1/2 -translate-x-1/2 px-5 py-1 bg-white/10 backdrop-blur-md rounded-2xl text-xs font-medium">峰值</div>
+                        </div>
+                        <div class="flex-1 h-48 bg-gradient-to-t from-[#7A9BB5]/30 to-transparent rounded-t-2xl"></div>
+                    </div>
+                    
+                    <div class="grid grid-cols-3 gap-4 mt-10 text-center">
+                        <div class="glass p-4 rounded-2xl">
+                            <div class="text-xs text-[#7A9BB5]">CPU</div>
+                            <div class="text-2xl font-semibold text-white">41%</div>
+                        </div>
+                        <div class="glass p-4 rounded-2xl">
+                            <div class="text-xs text-[#7A9BB5]">内存</div>
+                            <div class="text-2xl font-semibold text-white">68%</div>
+                        </div>
+                        <div class="glass p-4 rounded-2xl">
+                            <div class="text-xs text-[#7A9BB5]">带宽</div>
+                            <div class="text-2xl font-semibold text-white">2.4G</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Floating highlight -->
+                <div id="highlight" 
+                     class="absolute w-96 h-96 bg-gradient-to-br from-[#C4DAE8]/30 to-transparent rounded-full blur-3xl pointer-events-none opacity-60 transition-all duration-75"
+                     style="left: 30%; top: 20%; transform: translate(-50%, -50%);"></div>
+            </div>
+        </div>
         
-        // 启动系统 (解锁 AudioContext)
-        window.startExperience = function() {
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            if (!isAudioStarted) {
-                isAudioStarted = true;
-                const overlay = document.getElementById('loading-overlay');
-                overlay.style.opacity = 0;
-                setTimeout(() => overlay.style.display = 'none', 1000);
-            }
-        };
+        <!-- Scroll Indicator -->
+        <div class="absolute bottom-12 left-1/2 flex flex-col items-center gap-y-2 text-xs tracking-widest text-[#7A9BB5]">
+            <div>SCROLL</div>
+            <div class="w-[1px] h-12 bg-gradient-to-b from-transparent via-[#7A9BB5] to-transparent"></div>
+        </div>
+    </section>
 
-        // --- 核心变量 (新增触摸/双指缩放相关状态) ---
-        let scene, camera, renderer, composer, bloomPass;
-        let clock = new THREE.Clock();
-        let raycaster = new THREE.Raycaster();
-        let mouse = new THREE.Vector2();
-        // 触摸相关核心变量
-        let touches = {}; // 存储触摸点 {0: {x,y}, 1: {x,y}}
-        let lastTouchDistance = 0; // 上一帧双指距离，用于计算缩放
-        let isSingleTouch = true; // 是否为单指触摸（区分单指拖动和双指缩放）
+    <!-- Features Section -->
+    <section id="features" class="section py-32 border-t border-white/5">
+        <div class="max-w-screen-2xl mx-auto px-8">
+            <div class="text-center mb-20">
+                <div class="inline px-6 py-3 glass rounded-3xl text-sm mb-6">核心特性</div>
+                <h2 class="text-5xl font-semibold tracking-tight">为未来而生</h2>
+            </div>
+            
+            <div class="grid grid-cols-3 gap-8">
+                <!-- Card 1 -->
+                <div class="glass rounded-3xl p-10 neon-border group hover:scale-[1.02] transition-all duration-500">
+                    <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#7A9BB5] to-[#C4DAE8] flex items-center justify-center mb-8 text-3xl">🌌</div>
+                    <h3 class="text-3xl font-medium mb-3">粒子网格</h3>
+                    <p class="text-[#C4DAE8]/70">鼠标驱动的动态背景网格，带来沉浸式空间感。</p>
+                    <div class="mt-12 text-xs uppercase tracking-widest text-[#7A9BB5] group-hover:text-white transition-colors">实时交互</div>
+                </div>
+                
+                <!-- Card 2 -->
+                <div class="glass rounded-3xl p-10 neon-border group hover:scale-[1.02] transition-all duration-500">
+                    <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#7A9BB5] to-[#C4DAE8] flex items-center justify-center mb-8 text-3xl">📡</div>
+                    <h3 class="text-3xl font-medium mb-3">光晕响应</h3>
+                    <p class="text-[#C4DAE8]/70">卡片边缘霓虹光随光标角度动态变化。</p>
+                    <div class="mt-12 text-xs uppercase tracking-widest text-[#7A9BB5] group-hover:text-white transition-colors">微交互</div>
+                </div>
+                
+                <!-- Card 3 -->
+                <div class="glass rounded-3xl p-10 neon-border group hover:scale-[1.02] transition-all duration-500">
+                    <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#7A9BB5] to-[#C4DAE8] flex items-center justify-center mb-8 text-3xl">📊</div>
+                    <h3 class="text-3xl font-medium mb-3">阶梯动画</h3>
+                    <p class="text-[#C4DAE8]/70">滚动时区块逐一浮现，富有层次与节奏。</p>
+                    <div class="mt-12 text-xs uppercase tracking-widest text-[#7A9BB5] group-hover:text-white transition-colors">流畅体验</div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <section id="features" class="section py-32 border-t border-white/5">
+        <div class="max-w-screen-2xl mx-auto px-8">
+            <div class="text-center mb-20">
+                <div class="inline px-6 py-3 glass rounded-3xl text-sm mb-6">价格</div>
+                <h2 class="text-5xl font-semibold tracking-tight">定价</h2>
+            </div>
+            
+            <div class="grid grid-cols-3 gap-8">
+                <!-- Card 1 -->
+                <div class="glass rounded-3xl p-10 neon-border group hover:scale-[1.02] transition-all duration-500">
+                    <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#7A9BB5] to-[#C4DAE8] flex items-center justify-center mb-8 text-3xl">🌌</div>
+                    <h3 class="text-3xl font-medium mb-3">基础版</h3>
+                    <p class="text-[#C4DAE8]/70">19/月</p>
+                    <div class="mt-12 text-xs uppercase tracking-widest text-[#7A9BB5] group-hover:text-white transition-colors">实时交互</div>
+                </div>
+                
+                <!-- Card 2 -->
+                <div class="glass rounded-3xl p-10 neon-border group hover:scale-[1.02] transition-all duration-500">
+                    <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#7A9BB5] to-[#C4DAE8] flex items-center justify-center mb-8 text-3xl">📡</div>
+                    <h3 class="text-3xl font-medium mb-3">pro版</h3>
+                    <p class="text-[#C4DAE8]/70">158/年</p>
+                    <div class="mt-12 text-xs uppercase tracking-widest text-[#7A9BB5] group-hover:text-white transition-colors">微交互</div>
+                </div>
+                
+                <!-- Card 3 -->
+                <div class="glass rounded-3xl p-10 neon-border group hover:scale-[1.02] transition-all duration-500">
+                    <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#7A9BB5] to-[#C4DAE8] flex items-center justify-center mb-8 text-3xl">📊</div>
+                    <h3 class="text-3xl font-medium mb-3">专业版</h3>
+                    <p class="text-[#C4DAE8]/70">400/两年</p>
+                    <div class="mt-12 text-xs uppercase tracking-widest text-[#7A9BB5] group-hover:text-white transition-colors">流畅体验</div>
+            
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- Final CTA -->
+    <section class="py-32 border-t border-white/5 relative overflow-hidden">
+        <div class="max-w-screen-2xl mx-auto px-8 text-center">
+            <div class="glass max-w-2xl mx-auto rounded-3xl p-16">
+                <h2 class="text-5xl font-semibold mb-6">准备好进入深空了吗？</h2>
+                <p class="text-xl text-[#C4DAE8]/80 mb-12">加入数千名先锋用户，体验下一代界面设计。</p>
+               
+                <button onclick="showDemo()" 
+                        class="px-12 py-6 text-xl font-semibold bg-white text-black rounded-3xl hover:scale-105 active:scale-95 transition-all inline-flex items-center gap-x-4">
+                    免费启动
+                    <span class="text-2xl">→</span>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="glass border-t border-white/10 py-12">
+        <div class="max-w-screen-2xl mx-auto px-8 text-center text-xs text-[#7A9BB5]">
+            © 2026 小y — 设计语言实验
+        </div>
+    </footer>
+
+    <!-- Search Modal -->
+    <div id="searchModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-xl z-[100] flex items-start justify-center pt-32">
+        <div class="glass w-full max-w-xl rounded-3xl p-8">
+            <input id="searchInput" 
+                   type="text" 
+                   placeholder="搜索功能、项目、文档..." 
+                   class="w-full bg-transparent text-2xl outline-none placeholder:text-[#7A9BB5]/60">
+        </div>
+    </div>
+
+    <script>
+        // Tailwind script already included via CDN
+        function initTailwind() {}
         
-        let isMouseDown = false; // 鼠标/单指是否按下
-        let lastMouseX = 0, lastMouseY = 0; // 上一帧鼠标/触摸位置
-        let clickDownTime = 0; // 按下时间戳（区分单击/长按）
-        const CLICK_THRESHOLD = 200; // 单击判定阈值(ms)，超过则为长按
-        const TOUCH_MOVE_THRESHOLD = 10; // 触摸移动阈值，避免单击误判
-        let touchMoveDistance = 0; // 触摸移动距离，用于判定是否为单击
-
-        // 单击放大状态
-        let zoomingCard = null; // 正在放大的卡片
-        let zoomEndTime = 0; // 放大停留结束时间戳
-        const ZOOM_STAY_TIME = 2000; // 放大停留时间(ms)，可自定义
-        let isZoomPaused = false; // 是否处于放大停留状态（禁止拖动/重复单击）
-
-        // 全局冷却时间 (时间戳)
-        let cooldownEndTime = 0;
-        let lastHoverObj = null; 
-
-        let camTarget = { lat: 0, lon: 0, radius: 85 }; 
-        let camCurrent = { lat: 0, lon: 0, radius: 100 };
-
-        const popupGroup = new THREE.Group();
-        const popups = []; 
-        let particles = null; 
-        let particleTexture = null;
-        
-        // 爆炸系统数组
-        let explosions = [];
-
-        // --- 文案库 ---
-        let MESSAGES = [
-            "今天辛苦了", "早点休息", "多喝热水", "好梦成真", 
-            "别熬夜了", "保持好心情", "未来可期", "记得吃饭", 
-            "抱抱自己", "永远开心", "万事胜意", "你很棒",
-            "记得微笑", "允许休息", "慢慢来", "好事发生",
-            "生活明朗", "万物可爱", "平安喜乐", "自在如风",
-            "保持热爱", "奔赴山海", "来日方长", "一切顺利",
-            "天天开心", "元气满满", "能量加满", "我想你了",
-            "见信如晤", "岁岁平安", "光芒万丈", "随遇而安",
-            "不负韶华", "只争朝夕", "初心未改", "未来已来",
-            "心之所向", "素履以往", "生如夏花", "静待花开"
-        ];
-        // 副标题
-        const SUB_MESSAGES = [
-            "不用刻意迎合，你本来的样子就很美。",
-            "与其向往，不如出发，路在脚下。",
-            "允许自己做自己，允许别人做别人。",
-            "慢慢理解世界，慢慢更新自己。",
-            "每一种创伤，都是一种成熟。",
-            "你逆光而来，配得上这世间所有的好。",
-            "生活原本沉闷，但跑起来就有风。",
-            "保持热爱，奔赴下一场山海。",
-            "关关难过关关过，前路漫漫亦灿灿。",
-            "在这路遥马急的人间，你我平安就好。",
-            "世界上所有的惊喜和好运，都是你累积的人品和善良。",
-            "愿你无论哪个年龄，都能保持那份赤忱与勇敢。",
-            "生活里的不期而遇，都是努力后的惊喜。",
-            "无论今天多么浑浊，明天依旧会如约而至。",
-            "虽然辛苦，我还是会选择那种滚烫的人生。",
-            "所谓无底深渊，下去，也是前程万里。",
-            "你所见即是我，好与坏我都不反驳。",
-            "把不忙不闲的工作做得出色，把不咸不淡的生活过得精彩。",
-            "愿你精致到老，眼里长着太阳，笑里全是坦荡。",
-            "凡是过往，皆为序章；凡是未来，皆有可期。"
-        ];
-        
-        // --- 样式库 ---
-        const PALETTES = [
-            { bg: ['#24243e', '#302b63', '#0f0c29'], border: '#a18cd1', particle: [0xa18cd1, 0x302b63] }, 
-            { bg: ['#134e5e', '#71b280'], border: '#71b280', particle: [0x71b280, 0x134e5e] }, 
-            { bg: ['#ff9966', '#ff5e62'], border: '#ff9966', particle: [0xff9966, 0xff5e62] }, 
-            { bg: ['#000428', '#004e92'], border: '#004e92', particle: [0x004e92, 0x00c6ff] }, 
-            { bg: ['#833ab4', '#fd1d1d', '#fcb045'], border: '#fcb045', particle: [0xfcb045, 0xfd1d1d] }, 
-            { bg: ['#2C3E50', '#4CA1AF'], border: '#4CA1AF', particle: [0x4CA1AF, 0xBDC3C7] }, 
-            { bg: ['#4568DC', '#B06AB3'], border: '#B06AB3', particle: [0xB06AB3, 0x4568DC] } 
-        ];
-
-        // --- 全局参数 (移动端微调灵敏度，更顺手) ---
-        const params = {
-            // 星云生成
-            count: 350, 
-            radiusBase: 40, 
-            radiusVariation: 15, 
-            
-            // 动态
-            cardBaseSize: 1.0, 
-            scale: 1.1,        
-            floatSpeed: 0.4,
-            rotationSpeed: 0.012, 
-
-            // 交互
-            zoomScaleRatio: 0.8,  // 替换原固定zoomScale：放大宽度占屏幕宽度的比例(0-1)，手机端推荐0.8-0.9
-            dissolveTime: 3.0,   
-            cooldownTime: 2000,  
-            
-            // 视觉
-            bloomStrength: 0.7,
-            bloomRadius: 0.8,
-            bloomThreshold: 0.15,
-            // 鼠标/触摸控制灵敏度（移动端已适配，此值通用）
-            mouseSensitivity: 0.005,
-            wheelSensitivity: 5,
-            // 双指缩放灵敏度
-            touchZoomSensitivity: 0.08
-        };
-
-        // --- 文本编辑器逻辑 ---
-        window.openEditor = function() {
-            const modal = document.getElementById('editor-modal');
-            const textarea = document.getElementById('text-input');
-            textarea.value = MESSAGES.join('\n'); // 载入当前文本
-            modal.style.display = 'flex';
+        // 弹窗内部粒子系统
+        let authCanvas, authCtx, authParticles = [];
+        function initAuthParticle(){
+            authCanvas = document.getElementById("authParticleCanvas");
+            authCtx = authCanvas.getContext("2d");
+            const wrap = document.getElementById("authWrap");
+            function resizeAuth(){
+                authCanvas.width = wrap.offsetWidth;
+                authCanvas.height = wrap.offsetHeight;
+            }
+            resizeAuth();
+            window.addEventListener("resize",resizeAuth);
+            for(let i=0;i<60;i++) authParticles.push({
+                x:Math.random()*authCanvas.width,
+                y:Math.random()*authCanvas.height,
+                s:Math.random()*1.5+0.3,
+                sx:(Math.random()-0.5)*0.2,
+                sy:(Math.random()-0.5)*0.2
+            })
+            function authLoop(){
+                authCtx.clearRect(0,0,authCanvas.width,authCanvas.height);
+                authParticles.forEach(p=>{
+                    p.x += p.sx;
+                    p.y += p.sy;
+                    if(p.x<0||p.x>authCanvas.width)p.sx*=-1;
+                    if(p.y<0||p.y>authCanvas.height)p.sy*=-1;
+                    authCtx.fillStyle = "rgba(196,218,232,0.4)";
+                    authCtx.beginPath();
+                    authCtx.arc(p.x,p.y,p.s,0,Math.PI*2);
+                    authCtx.fill();
+                })
+                requestAnimationFrame(authLoop);
+            }
+            authLoop();
         }
-        window.closeEditor = function() {
-            document.getElementById('editor-modal').style.display = 'none';
+
+        // 密码强度检测
+        function checkPwdStrength(){
+            const input = document.getElementById("regPwd");
+            const bar = document.getElementById("pwdStrength");
+            const text = document.getElementById("strengthText");
+            input.addEventListener("input",()=>{
+                const val = input.value;
+                let score = 0;
+                if(val.length>=8)score+=25;
+                if(/[A-Z]/.test(val))score+=20;
+                if(/[0-9]/.test(val))score+=20;
+                if(/[!@#$%^&*]/.test(val))score+=30;
+                bar.style.width = score+"%";
+                if(score<30){
+                    bar.style.background="#ff4456";
+                    text.textContent="弱";text.style.color="#ff4456";
+                }else if(score<70){
+                    bar.style.background="#ffc145";
+                    text.textContent="中等";text.style.color="#ffc145";
+                }else{
+                    bar.style.background="#4ade80";
+                    text.textContent="高强度";text.style.color="#4ade80";
+                }
+            })
         }
-        window.saveText = function() {
-            const textarea = document.getElementById('text-input');
-            const raw = textarea.value;
-            // 过滤空行
-            const newLines = raw.split('\n').map(t => t.trim()).filter(t => t.length > 0);
-            if(newLines.length > 0) {
-                MESSAGES = newLines;
-                initPopups(); // 重建星云
-                window.closeEditor();
-            } else {
-                alert("内容不能为空");
+
+        // 表单校验
+        function checkLoginForm(){
+            let pass = true;
+            const acc = document.getElementById("loginAccount");
+            const pwd = document.getElementById("loginPwd");
+            const accErr = document.getElementById("accErr");
+            const pwdErr = document.getElementById("pwdErr");
+            accErr.style.display = "none";
+            pwdErr.style.display = "none";
+            if(!acc.value.trim()){accErr.style.display="block";pass=false;}
+            if(!pwd.value.trim()){pwdErr.style.display="block";pass=false;}
+            return pass;
+        }
+        function checkRegForm(){
+            let ok = true;
+            const mail = document.getElementById("regMail");
+            const pwd = document.getElementById("regPwd");
+            const mailErr = document.getElementById("mailErr");
+            const pwdErr = document.getElementById("regPwdErr");
+            mailErr.style.display="none";pwdErr.style.display="none";
+            if(!mail.value.trim()){mailErr.style.display="block";ok=false;}
+            if(pwd.value.length<8){pwdErr.style.display="block";ok=false;}
+            if(!document.getElementById("regAgree").checked) ok=false;
+            return ok;
+        }
+
+        // 生物登录模拟
+        function bioLogin(){
+            showToast("指纹识别成功，自动登录中...");
+            setTimeout(()=>{
+                closeLogin();
+                createSuccessPulse();
+                showToast("生物解锁登录成功！");
+            },1200)
+        }
+        // 登录成功全屏脉冲
+        function createSuccessPulse(){
+            const div = document.createElement("div");
+            div.className = "success-pulse";
+            document.body.appendChild(div);
+            setTimeout(()=>div.remove(),1200);
+        }
+
+        // Particle System
+        let canvas, ctx, particles = [];
+        class Particle {
+            constructor() {
+                this.x = Math.random() * window.innerWidth;
+                this.y = Math.random() * window.innerHeight;
+                this.size = Math.random() * 2.2 + 0.6;
+                this.speedX = Math.random() * 0.4 - 0.2;
+                this.speedY = Math.random() * 0.4 - 0.2;
+            }
+            update(mouseX, mouseY) {
+                const dx = mouseX - this.x;
+                const dy = mouseY - this.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                if (distance < 220) {
+                    this.speedX += dx * 0.0008;
+                    this.speedY += dy * 0.0008;
+                }
+                this.x += this.speedX;
+                this.y += this.speedY;
+                if (this.x < 0 || this.x > window.innerWidth) this.speedX *= -1;
+                if (this.y < 0 || this.y > window.innerHeight) this.speedY *= -1;
+            }
+            draw() {
+                ctx.fillStyle = 'rgba(196, 218, 232, 0.65)';
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
             }
         }
-
-        // --- B键 沉浸模式逻辑 + 移动端返回键兼容 ---
-        window.addEventListener('keydown', (e) => {
-            if(e.key.toLowerCase() === 'b') {
-                document.body.classList.toggle('clean-mode');
-            }
-        });
-        // 移动端浏览器返回键兼容，防止误退
-        window.addEventListener('popstate', () => {
-            if(document.body.classList.contains('clean-mode')) {
-                document.body.classList.remove('clean-mode');
-                history.pushState({}, '');
-            }
-        });
-        history.pushState({}, '');
-
-        // --- 计算双指之间的距离 ---
-        function getTouchDistance(t0, t1) {
-            const dx = t0.x - t1.x;
-            const dy = t0.y - t1.y;
-            return Math.sqrt(dx * dx + dy * dy);
-        }
-
-        // --- 鼠标+触摸 控制逻辑（核心适配：单指拖动、双指缩放、触摸单击/长按）---
-        function initMouseControl() {
-            // === 桌面端鼠标事件 ===
-            // 鼠标按下
-            document.addEventListener('mousedown', (e) => {
-                if (e.button === 0 && !isZoomPaused && !isCoolingDown()) {
-                    isMouseDown = true;
-                    clickDownTime = Date.now();
-                    lastMouseX = e.clientX;
-                    lastMouseY = e.clientY;
-                    document.body.classList.add('dragging');
-                    e.preventDefault();
-                }
-            });
-            // 鼠标移动
-            document.addEventListener('mousemove', (e) => {
-                if (!isMouseDown || isZoomPaused) return;
-                const deltaX = e.clientX - lastMouseX;
-                const deltaY = e.clientY - lastMouseY;
-                lastMouseX = e.clientX;
-                lastMouseY = e.clientY;
-                camTarget.lon += deltaX * params.mouseSensitivity;
-                camTarget.lat -= deltaY * params.mouseSensitivity;
-                camTarget.lat = THREE.MathUtils.clamp(camTarget.lat, -Math.PI/3, Math.PI/3);
-                e.preventDefault();
-            });
-            // 鼠标松开
-            document.addEventListener('mouseup', (e) => {
-                if (e.button === 0) {
-                    handlePointerUp(e.clientX, e.clientY);
-                }
-            });
-            // 鼠标离开
-            document.addEventListener('mouseleave', () => {
-                handlePointerUp(0, 0);
-            });
-            // 鼠标滚轮
-            document.addEventListener('wheel', (e) => {
-                if (isZoomPaused) return;
-                const delta = e.deltaY * 0.1;
-                camTarget.radius += delta * params.wheelSensitivity;
-                camTarget.radius = THREE.MathUtils.clamp(camTarget.radius, 25, 160);
-                e.preventDefault();
-            });
-
-            // === 移动端触摸事件 核心适配 ===
-            // 触摸开始：单指/双指识别
-            document.addEventListener('touchstart', (e) => {
-                e.preventDefault(); // 禁止默认行为
-                if (isZoomPaused || isCoolingDown()) return;
-
-                // 存储所有触摸点
-                for (let i = 0; i < e.touches.length; i++) {
-                    const touch = e.touches[i];
-                    touches[touch.identifier] = { x: touch.clientX, y: touch.clientY };
-                }
-
-                // 双指触摸：开启缩放模式，关闭拖动
-                if (e.touches.length === 2) {
-                    isSingleTouch = false;
-                    lastTouchDistance = getTouchDistance(touches[e.touches[0].identifier], touches[e.touches[1].identifier]);
-                } 
-                // 单指触摸：开启拖动模式，记录初始状态
-                else if (e.touches.length === 1) {
-                    isSingleTouch = true;
-                    isMouseDown = true;
-                    clickDownTime = Date.now();
-                    touchMoveDistance = 0; // 重置触摸移动距离
-                    const touch = e.touches[0];
-                    lastMouseX = touch.clientX;
-                    lastMouseY = touch.clientY;
-                    document.body.classList.add('dragging');
-                    // 触摸悬停模拟：添加hover样式
-                    const btn = document.elementFromPoint(touch.clientX, touch.clientY);
-                    if (btn && btn.classList.contains('hud-btn')) btn.classList.add('touch-hover');
-                }
-            }, { passive: false }); // 必须设置passive:false，否则e.preventDefault()无效
-
-            // 触摸移动：单指拖动 / 双指缩放
-            document.addEventListener('touchmove', (e) => {
-                e.preventDefault();
-                if (isZoomPaused || isCoolingDown()) return;
-
-                // 更新触摸点
-                for (let i = 0; i < e.touches.length; i++) {
-                    const touch = e.touches[i];
-                    touches[touch.identifier] = { x: touch.clientX, y: touch.clientY };
-                }
-
-                // 双指缩放
-                if (e.touches.length === 2 && !isSingleTouch) {
-                    const currentDistance = getTouchDistance(touches[e.touches[0].identifier], touches[e.touches[1].identifier]);
-                    if (lastTouchDistance > 0) {
-                        const delta = (currentDistance - lastTouchDistance) * params.touchZoomSensitivity;
-                        camTarget.radius -= delta;
-                        camTarget.radius = THREE.MathUtils.clamp(camTarget.radius, 25, 160);
-                    }
-                    lastTouchDistance = currentDistance;
-                } 
-                // 单指拖动
-                else if (e.touches.length === 1 && isSingleTouch && isMouseDown) {
-                    const touch = e.touches[0];
-                    const deltaX = touch.clientX - lastMouseX;
-                    const deltaY = touch.clientY - lastMouseY;
-                    // 累计触摸移动距离，用于判定是否为单击
-                    touchMoveDistance += Math.sqrt(deltaX*deltaX + deltaY*deltaY);
-                    lastMouseX = touch.clientX;
-                    lastMouseY = touch.clientY;
-                    camTarget.lon += deltaX * params.mouseSensitivity;
-                    camTarget.lat -= deltaY * params.mouseSensitivity;
-                    camTarget.lat = THREE.MathUtils.clamp(camTarget.lat, -Math.PI/3, Math.PI/3);
-                }
-
-                // 更新射线检测的鼠标位置（兼容触摸）
-                if (e.touches.length >= 1) {
-                    const touch = e.touches[0];
-                    mouse.x = (touch.clientX / window.innerWidth) * 2 - 1;
-                    mouse.y = -(touch.clientY / window.innerHeight) * 2 + 1;
-                }
-            }, { passive: false });
-
-            // 触摸结束：重置状态，判定单击/长按
-            document.addEventListener('touchend', (e) => {
-                e.preventDefault();
-                // 移除触摸点
-                for (let i = 0; i < e.changedTouches.length; i++) {
-                    const touch = e.changedTouches[i];
-                    delete touches[touch.identifier];
-                    // 移除hover样式
-                    const btn = document.elementFromPoint(touch.clientX, touch.clientY);
-                    if (btn && btn.classList.contains('hud-btn')) btn.classList.remove('touch-hover');
-                }
-
-                // 最后一个触摸点离开，处理松开逻辑
-                if (e.touches.length === 0) {
-                    const lastTouch = e.changedTouches[0];
-                    handlePointerUp(lastTouch.clientX, lastTouch.clientY);
-                    isSingleTouch = true;
-                    lastTouchDistance = 0;
-                } 
-                // 双指变单指，重置单指状态
-                else if (e.touches.length === 1) {
-                    isSingleTouch = true;
-                    const touch = e.touches[0];
-                    lastMouseX = touch.clientX;
-                    lastMouseY = touch.clientY;
-                }
-            }, { passive: false });
-
-            // 触摸取消（如来电、弹窗）
-            document.addEventListener('touchcancel', (e) => {
-                e.preventDefault();
-                touches = {};
-                handlePointerUp(0, 0);
-                isSingleTouch = true;
-                lastTouchDistance = 0;
-                // 移除所有hover样式
-                document.querySelectorAll('.hud-btn.touch-hover').forEach(btn => btn.classList.remove('touch-hover'));
-            }, { passive: false });
-
-            // 鼠标/触摸 移动时更新射线检测位置（通用）
-            document.addEventListener('mousemove', (e) => {
-                mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
-                mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
-            });
-        }
-
-        // --- 鼠标/触摸 松开通用处理函数（核心：统一判定单击/长按）---
-        function handlePointerUp(clientX, clientY) {
-            isMouseDown = false;
-            document.body.classList.remove('dragging');
-            
-            // 仅在 非放大/非冷却 状态下判定单击
-            if (!isZoomPaused && !isCoolingDown()) {
-                const clickDuration = Date.now() - clickDownTime;
-                // 单击判定：按下时间 < 阈值 + 移动距离 < 阈值（防拖动误判）
-                if (clickDuration < CLICK_THRESHOLD && touchMoveDistance < TOUCH_MOVE_THRESHOLD) {
-                    // 转换坐标为three.js的鼠标坐标
-                    mouse.x = (clientX / window.innerWidth) * 2 - 1;
-                    mouse.y = -(clientY / window.innerHeight) * 2 + 1;
-                    // 射线检测点击的卡片
-                    raycaster.setFromCamera(mouse, camera);
-                    const activePopups = popups.filter(p => !p.userData.isDissolved && !p.userData.isDissolving);
-                    const intersects = raycaster.intersectObjects(activePopups);
-                    if (intersects.length > 0) {
-                        const clickCard = intersects[0].object;
-                        triggerCardZoom(clickCard); // 触发单击放大
-                    }
-                }
-            }
-            // 重置触摸相关状态
-            touchMoveDistance = 0;
-        }
-
-        // --- 单击卡片放大核心函数 ---
-        function triggerCardZoom(card) {
-            if (zoomingCard || isZoomPaused) return; // 已有放大卡片，禁止重复单击
-            zoomingCard = card;
-            isZoomPaused = true;
-            zoomEndTime = Date.now() + ZOOM_STAY_TIME; // 设定停留结束时间
-            document.body.classList.add('zoom-pause'); // 切换光标样式
-            playSound('click-zoom'); // 播放单击专属音效
-
-            // 初始化卡片放大的详细纹理（如果没有的话）
-            const data = card.userData;
-            if (!data.detailedTex) {
-                data.detailedTex = createTexture(data.text, data.subText, data.paletteId);
-            }
-        }
-
-        // --- 冷却状态判定工具函数 ---
-        function isCoolingDown() {
-            return Date.now() < cooldownEndTime;
-        }
-
-        // --- 新增：计算屏幕适配的放大比例（核心适配手机端）---
-        function getScreenAdaptedZoomScale() {
-            // 基于屏幕宽度计算放大比例，单位：three.js世界单位
-            // 手机端窄屏：放大后卡片宽度占屏幕80%；桌面端宽屏：限制最大宽度，避免过大
-            const screenWidth = window.innerWidth;
-            // 基础比例：每100px屏幕宽度对应1个three.js世界单位，可根据需要微调
-            const baseUnitPer100px = 1;
-            let zoomScale = (screenWidth / 100) * baseUnitPer100px * params.zoomScaleRatio;
-            // 限制最大/最小放大比例，避免极端情况
-            zoomScale = THREE.MathUtils.clamp(zoomScale, 4, 10);
-            return zoomScale;
-        }
-
-        function init() {
-            scene = new THREE.Scene();
-            scene.fog = new THREE.FogExp2(0x02020a, 0.006); 
-
-            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-            
-            renderer = new THREE.WebGLRenderer({ 
-                antialias: true, 
-                alpha: true, 
-                powerPreference: "high-performance",
-                preserveDrawingBuffer: true // 移动端保存绘制缓冲区，防止闪屏
-            });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // 限制像素比，移动端性能优化
-            renderer.toneMapping = THREE.ACESFilmicToneMapping;
-            renderer.setClearColor(0x02020a, 1); // 设定清屏颜色，适配移动端透明问题
-            document.body.appendChild(renderer.domElement);
-
-            const renderScene = new RenderPass(scene, camera);
-            
-            bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
-            bloomPass.threshold = params.bloomThreshold;
-            bloomPass.strength = params.bloomStrength;
-            bloomPass.radius = params.bloomRadius;
-
-            composer = new EffectComposer(renderer);
-            composer.addPass(renderScene);
-            composer.addPass(bloomPass);
-            // 移动端适配EffectComposer像素比
-            composer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-
-            particleTexture = createParticleTexture();
-            initParticles();
-            initPopups();
-            scene.add(popupGroup);
-            initGUI();
-            initMouseControl(); // 初始化鼠标+触摸控制
-
-            window.addEventListener('resize', onWindowResize);
-            // 移动端窗口大小变化（如旋转屏幕）立即适配
-            window.addEventListener('orientationchange', onWindowResize);
-        }
-
-        // --- 兼容绘制 ---
-        function drawRoundRect(ctx, x, y, w, h, r) {
-            if (w < 2 * r) r = w / 2;
-            if (h < 2 * r) r = h / 2;
-            ctx.beginPath();
-            ctx.moveTo(x + r, y);
-            ctx.arcTo(x + w, y, x + w, y + h, r);
-            ctx.arcTo(x + w, y + h, x, y + h, r);
-            ctx.arcTo(x, y + h, x, y, r);
-            ctx.arcTo(x, y, x + w, y, r);
-            ctx.closePath();
-        }
-
-        function createTexture(text, subText, paletteIndex) {
-            const canvas = document.createElement('canvas');
-            // 移动端纹理大小适配，避免过大导致性能问题
-            const w = Math.min(512, window.innerWidth * 0.8);
-            const h = subText ? (w * 350) / 512 : (w * 256) / 512; 
-            canvas.width = w; canvas.height = h; 
-            
-            const ctx = canvas.getContext('2d');
-            const style = PALETTES[paletteIndex % PALETTES.length];
-
-            const grad = ctx.createLinearGradient(0, 0, w, h);
-            if(style.bg.length === 3) {
-                grad.addColorStop(0, style.bg[0]);
-                grad.addColorStop(0.5, style.bg[1]);
-                grad.addColorStop(1, style.bg[2]);
-            } else {
-                grad.addColorStop(0, style.bg[0]);
-                grad.addColorStop(1, style.bg[1]);
-            }
-            
-            const r = Math.min(24, w * 0.05); // 圆角自适应纹理大小
-            drawRoundRect(ctx, 0, 0, w, h, r);
-            ctx.fillStyle = grad;
-            ctx.globalAlpha = 0.8; 
-            ctx.fill();
-
-            ctx.globalAlpha = 1.0;
-            ctx.lineWidth = Math.min(6, w * 0.012); // 边框宽度自适应
-            ctx.strokeStyle = "rgba(255,255,255,0.1)";
-            ctx.stroke();
-            ctx.lineWidth = Math.min(2, w * 0.004);
-            ctx.strokeStyle = style.border; 
-            ctx.globalAlpha = 0.5;
-            ctx.stroke();
-            ctx.globalAlpha = 1.0;
-
-            // 小图标自适应
-            const dotSize = Math.min(8, w * 0.02);
-            ctx.fillStyle = style.bg[0]; ctx.beginPath(); ctx.arc(w*0.08, w*0.08, dotSize, 0, Math.PI*2); ctx.fill();
-            ctx.fillStyle = style.border; ctx.beginPath(); ctx.arc(w*0.14, w*0.08, dotSize, 0, Math.PI*2); ctx.fill();
-            ctx.fillStyle = style.bg[style.bg.length-1]; ctx.beginPath(); ctx.arc(w*0.20, w*0.08, dotSize, 0, Math.PI*2); ctx.fill();
-
-            ctx.shadowColor = "rgba(0,0,0,0.6)";
-            ctx.shadowBlur = Math.min(12, w * 0.024);
-            ctx.shadowOffsetY = Math.min(5, w * 0.01);
-            ctx.textAlign = "center";
-            ctx.textBaseline = "middle";
-
-            const mainTextY = subText ? h/2 - w*0.07 : h/2 + w*0.01; 
-            // 主文字大小自适应
-            ctx.font = `bold ${Math.min(72, w*0.14)}px 'Microsoft YaHei'`;
-            ctx.fillStyle = "#ffffff";
-            ctx.fillText(text, w/2, mainTextY);
-
-            if (subText) {
-                // 副文字大小自适应
-                ctx.font = `normal ${Math.min(26, w*0.05)}px 'Microsoft YaHei'`;
-                ctx.fillStyle = "rgba(255, 255, 255, 0.85)";
-                ctx.shadowBlur = 0; 
-                
-                const maxWidth = w - w*0.14;
-                let words = subText.split('');
-                let line = '';
-                let y = mainTextY + w*0.15;
-                
-                for(let n = 0; n < words.length; n++) {
-                    let testLine = line + words[n];
-                    let metrics = ctx.measureText(testLine);
-                    if (metrics.width > maxWidth && n > 0) {
-                        ctx.fillText(line, w/2, y);
-                        line = words[n];
-                        y += w*0.075;
-                    } else {
-                        line = testLine;
-                    }
-                }
-                ctx.fillText(line, w/2, y);
-            }
-
-            const tex = new THREE.CanvasTexture(canvas);
-            tex.colorSpace = THREE.SRGBColorSpace;
-            return tex;
-        }
-
-        // --- 核心：艺术化布局 ---
-        function initPopups() {
-            popupGroup.clear();
-            popups.length = 0;
-
-            const geometry = new THREE.PlaneGeometry(3.6, 1.8); 
-            const phiStep = Math.PI * (3 - Math.sqrt(5)); 
-
-            for(let i=0; i<params.count; i++) {
-                
-                let y_base = 1 - (i / (params.count - 1)) * 2;
-                y_base = Math.max(-1, Math.min(1, y_base)); 
-
-                const radius_at_y = Math.sqrt(1 - y_base * y_base);
-                const theta = phiStep * i;
-
-                let x = Math.cos(theta) * radius_at_y;
-                let y = y_base;
-                let z = Math.sin(theta) * radius_at_y;
-
-                const phi = Math.acos(y_base);
-                const wave = Math.sin(phi * 5 + theta * 3) * 0.25 + Math.cos(theta * 2) * 0.15;
-                
-                const finalRadius = params.radiusBase + 
-                                   (Math.random() - 0.5) * params.radiusVariation + 
-                                   (wave * 12); 
-
-                const pos = new THREE.Vector3(x, y, z).normalize().multiplyScalar(finalRadius);
-
-                const msg = MESSAGES[Math.floor(Math.random() * MESSAGES.length)];
-                const subMsg = SUB_MESSAGES[Math.floor(Math.random() * SUB_MESSAGES.length)];
-                const paletteId = Math.floor(Math.random() * PALETTES.length);
-
-                const tex = createTexture(msg, null, paletteId);
-
-                const material = new THREE.MeshBasicMaterial({
-                    map: tex,
-                    transparent: true,
-                    side: THREE.DoubleSide,
-                    depthWrite: false,
-                    color: 0xffffff 
-                });
-
-                const mesh = new THREE.Mesh(geometry, material);
-                mesh.position.copy(pos);
-                
-                mesh.userData = {
-                    basePos: pos.clone(),
-                    randomScaleFactor: (0.8 + Math.random()*0.4), 
-                    phase: Math.random() * Math.PI * 2,
-                    speed: 0.3 + Math.random() * 0.7, 
-                    text: msg,      
-                    subText: subMsg,
-                    paletteId: paletteId, 
-                    originalTex: tex,     
-                    detailedTex: null,    
-                    isReadingMode: false,
-                    holdStartTime: 0,
-                    isDissolving: false,
-                    isDissolved: false
-                };
-                
-                mesh.scale.setScalar(0);
-                popupGroup.add(mesh);
-                popups.push(mesh);
-            }
-        }
-
-        function createParticleTexture() {
-            const canvas = document.createElement('canvas');
-            canvas.width = 128; canvas.height = 128;
-            const ctx = canvas.getContext('2d');
-            const gradient = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
-            gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
-            gradient.addColorStop(0.2, 'rgba(240, 240, 255, 0.8)');
-            gradient.addColorStop(0.5, 'rgba(128, 128, 255, 0.2)');
-            gradient.addColorStop(1, 'rgba(0, 0, 64, 0)');
-            ctx.fillStyle = gradient;
-            ctx.fillRect(0, 0, 128, 128);
-            return new THREE.CanvasTexture(canvas);
-        }
-
         function initParticles() {
-            const particleCount = 3500; 
-            const geo = new THREE.BufferGeometry();
-            const pos = [];
-            const colors = []; 
-            const sizes = []; 
-            const colorObj = new THREE.Color();
-
-            for(let i=0; i<particleCount; i++) {
-                const r = (params.radiusBase + 20) * Math.pow(Math.random(), 0.4);
-                const theta = Math.random() * Math.PI * 2;
-                const phi = Math.acos(2 * Math.random() - 1);
-                const spiralMod = Math.sin(theta * 3) * 10;
-
-                pos.push(
-                    (r + spiralMod) * Math.sin(phi) * Math.cos(theta),
-                    (r + spiralMod) * Math.sin(phi) * Math.sin(theta),
-                    (r + spiralMod) * Math.cos(phi)
-                );
-
-                const palette = PALETTES[Math.floor(Math.random() * PALETTES.length)];
-                const colorHex = palette.particle[Math.floor(Math.random() * palette.particle.length)];
-                colorObj.setHex(colorHex);
-                colorObj.multiplyScalar(0.8 + Math.random() * 0.4);
-                colors.push(colorObj.r, colorObj.g, colorObj.b);
-                sizes.push(0.5 + Math.random() * 1.5);
+            canvas = document.getElementById('particleCanvas');
+            ctx = canvas.getContext('2d');
+            function resize() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
             }
-
-            geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-            geo.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
-            geo.setAttribute('size', new THREE.Float32BufferAttribute(sizes, 1));
-
-            const mat = new THREE.PointsMaterial({
-                size: 1.0, map: particleTexture, vertexColors: true, 
-                transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending, 
-                depthWrite: false, sizeAttenuation: true 
-            });
-
-            particles = new THREE.Points(geo, mat);
-            scene.add(particles);
+            resize();
+            window.addEventListener('resize', resize);
+            for (let i = 0; i < 180; i++) particles.push(new Particle());
         }
-
-        function createExplosion(position, paletteId) {
-            playSound('explode'); // 播放音效
-            const particleCount = 800;
-            const geo = new THREE.BufferGeometry();
-            const positions = [];
-            const colors = [];
-            const sizes = [];
-            const velocities = [];
-            const palette = PALETTES[paletteId % PALETTES.length];
-            const colorObj = new THREE.Color();
-
-            for (let i = 0; i < particleCount; i++) {
-                const spreadX = (Math.random() - 0.5) * 15;
-                const spreadY = (Math.random() - 0.5) * 10;
-                const spreadZ = (Math.random() - 0.5) * 2;
-
-                positions.push(position.x + spreadX, position.y + spreadY, position.z + spreadZ);
-
-                const colorHex = palette.particle[Math.floor(Math.random() * palette.particle.length)];
-                colorObj.setHex(colorHex);
-                colorObj.multiplyScalar(1.5); 
-                colors.push(colorObj.r, colorObj.g, colorObj.b);
-
-                sizes.push(0.5 + Math.random() * 1.2);
-                const angle = Math.random() * Math.PI * 2;
-                const speed = 0.2 + Math.random() * 0.8;
-                const vx = Math.cos(angle) * speed;
-                const vy = Math.sin(angle) * speed + 0.3; 
-                const vz = (Math.random() - 0.5) * speed;
-                velocities.push(vx, vy, vz);
-            }
-
-            geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-            geo.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
-            geo.setAttribute('size', new THREE.Float32BufferAttribute(sizes, 1));
-
-            const mat = new THREE.PointsMaterial({
-                size: 1.0, map: particleTexture, vertexColors: true,
-                transparent: true, opacity: 1.0, blending: THREE.AdditiveBlending,
-                depthWrite: false, sizeAttenuation: true
-            });
-
-            const points = new THREE.Points(geo, mat);
-            scene.add(points);
-            explosions.push({ mesh: points, velocities: velocities, age: 0, maxAge: 3.0 });
-        }
-
-        function updateExplosions(dt) {
-            for (let i = explosions.length - 1; i >= 0; i--) {
-                const exp = explosions[i];
-                exp.age += dt;
-
-                if (exp.age >= exp.maxAge) {
-                    scene.remove(exp.mesh);
-                    exp.mesh.geometry.dispose();
-                    exp.mesh.material.dispose();
-                    explosions.splice(i, 1);
-                    continue;
-                }
-
-                const positions = exp.mesh.geometry.attributes.position.array;
-                const count = positions.length / 3;
-
-                exp.mesh.material.opacity = 1.0 - (exp.age / exp.maxAge);
-                exp.mesh.material.size = Math.max(0, 1.0 * (1 - exp.age / exp.maxAge));
-
-                for (let j = 0; j < count; j++) {
-                    const idx = j * 3;
-                    const drag = 0.95;
-                    exp.velocities[idx] *= drag;
-                    exp.velocities[idx+1] *= drag;
-                    exp.velocities[idx+2] *= drag;
-
-                    positions[idx] += exp.velocities[idx];
-                    positions[idx+1] += exp.velocities[idx+1];
-                    positions[idx+2] += exp.velocities[idx+2];
-                }
-                exp.mesh.geometry.attributes.position.needsUpdate = true;
-            }
-        }
-
-        function initGUI() {
-            
-        }
-
-        function animate() {
-            requestAnimationFrame(animate);
-            const time = clock.getElapsedTime();
-            const dt = clock.getDelta(); 
-            const currentTimeMs = Date.now();
-
-            if (bloomPass) {
-                bloomPass.strength = params.bloomStrength;
-                bloomPass.radius = params.bloomRadius;
-                bloomPass.threshold = params.bloomThreshold;
-            }
-
-            const barContainer = document.getElementById('dissolve-bar-container');
-            const bar = document.getElementById('dissolve-bar');
-
-            let coolingDown = isCoolingDown();
-            // 检测放大停留是否结束
-            if (isZoomPaused && currentTimeMs >= zoomEndTime) {
-                isZoomPaused = false;
-                zoomingCard = null;
-                document.body.classList.remove('zoom-pause');
-            }
-
-            // 非放大/非拖动/非冷却时，保留自动旋转
-            if (!isMouseDown && !isZoomPaused && !coolingDown) {
-                camTarget.lon = time * 0.05;
-                camTarget.lat = Math.sin(time * 0.1) * 0.2;
-            }
-
-            // 平滑更新摄像头位置（放大停留时禁止视角变化）
-            if (!isZoomPaused) {
-                camCurrent.lon += (camTarget.lon - camCurrent.lon) * 0.05;
-                camCurrent.lat += (camTarget.lat - camCurrent.lat) * 0.05;
-                camCurrent.radius += (camTarget.radius - camCurrent.radius) * 0.1; 
-            }
-            
-            // 计算摄像头三维坐标，增加NaN容错，移动端更稳定
-            let cx = camCurrent.radius * Math.cos(camCurrent.lat) * Math.sin(camCurrent.lon);
-            let cy = camCurrent.radius * Math.sin(camCurrent.lat);
-            let cz = camCurrent.radius * Math.cos(camCurrent.lat) * Math.cos(camCurrent.lon);
-            if (isNaN(cx) || isNaN(cy) || isNaN(cz)) { cx = 0; cy = 0; cz = 85; } 
-
-            camera.position.set(cx, cy, cz);
-            camera.lookAt(0, 0, 0);
-
-            // 射线检测：检测鼠标/触摸悬停的卡片（冷却/放大时关闭）
-            let currentHover = null;
-            if (!coolingDown && !isZoomPaused) {
-                raycaster.setFromCamera(mouse, camera);
-                const activePopups = popups.filter(p => !p.userData.isDissolved && !p.userData.isDissolving);
-                const intersects = raycaster.intersectObjects(activePopups);
-                if (intersects.length > 0) {
-                    currentHover = intersects[0].object;
-                }
-            }
-
-            // 音效触发：悬停变化（冷却/放大时关闭）
-            if (currentHover && currentHover !== lastHoverObj && !coolingDown && !isZoomPaused) {
-                playSound('hover');
-            }
-            lastHoverObj = currentHover;
-            
-            let isReadingAny = false;
-
-            popups.forEach(mesh => {
-                const data = mesh.userData;
-                
-                // 卡片爆炸溶解逻辑
-                if (data.isDissolved) {
-                    if (mesh.material.opacity <= 0.05) {
-                         data.isDissolving = false;
-                         data.isDissolved = false;
-                         data.isReadingMode = false;
-                         data.holdStartTime = 0;
-                         mesh.scale.setScalar(0); 
-                         mesh.material.opacity = 0;
-                         mesh.material.map = data.originalTex;
-                         mesh.material.color.setHex(0xffffff); 
-                    } else { mesh.material.opacity *= 0.9; }
-                    return; 
-                }
-                if (data.isDissolving) {
-                    const expansionSpeed = 1.05; 
-                    mesh.scale.multiplyScalar(expansionSpeed);
-                    mesh.material.opacity -= 0.05;
-                    mesh.material.color.lerp(new THREE.Color(0x000000), 0.1); 
-                    if (mesh.material.opacity <= 0) { data.isDissolved = true; }
-                    return;
-                }
-
-                // --- 核心：单击放大逻辑（优先级高于长按/悬停）---
-                if (zoomingCard === mesh && isZoomPaused) {
-                    // 强制切换到详细纹理
-                    if (mesh.material.map !== data.detailedTex) {
-                        mesh.material.map = data.detailedTex;
+        let mouseX = 0, mouseY = 0;
+        function animateParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.strokeStyle = 'rgba(122, 155, 181, 0.1)';
+            ctx.lineWidth = 0.8;
+            for (let i = 0; i < particles.length; i++) {
+                const p1 = particles[i];
+                p1.update(mouseX, mouseY);
+                p1.draw();
+                for (let j = i + 1; j < particles.length; j++) {
+                    const p2 = particles[j];
+                    const dx = p1.x - p2.x;
+                    const dy = p1.y - p2.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < 110) {
+                        ctx.globalAlpha = (110 - dist) / 110;
+                        ctx.beginPath();
+                        ctx.moveTo(p1.x, p1.y);
+                        ctx.lineTo(p2.x, p2.y);
+                        ctx.stroke();
                     }
-                    // 关键修改：使用屏幕适配的动态放大比例，替代固定zoomScale
-                    const targetScale = getScreenAdaptedZoomScale();
-                    const ratioFix = 350/256;
-                    mesh.scale.lerp(new THREE.Vector3(targetScale, targetScale * ratioFix, 1), 0.2);
-                    mesh.material.opacity = 1.0; // 强制不透明
-                    
-                    // 卡片固定到镜头前方，跟随视角，移动端微调距离避免贴脸
-                    const camDir = new THREE.Vector3();
-                    camera.getWorldDirection(camDir);
-                    // 动态调整卡片与镜头的距离：屏幕越小，距离越近，避免手机上看不清
-                    const camDistance = THREE.MathUtils.clamp(window.innerWidth / 50, 20, 30);
-                    const targetWorldPos = camera.position.clone().add(camDir.multiplyScalar(camDistance));
-                    const targetLocalPos = mesh.parent.worldToLocal(targetWorldPos.clone());
-                    mesh.position.lerp(targetLocalPos, 0.2);
-                    mesh.quaternion.slerp(camera.quaternion, 0.2);
-                    return; // 跳过后续的长按/漂浮逻辑
                 }
-
-                // 原有长按爆炸逻辑（仅在非放大/非冷却时生效）
-                const isTarget = (currentHover === mesh);
-                const shouldRead = isTarget && isMouseDown && !coolingDown && !isZoomPaused;
-
-                let targetScale = data.randomScaleFactor * params.cardBaseSize; 
-                let targetScaleY = targetScale; 
-                let targetOpacity = 0.85;
-                
-                if (shouldRead) {
-                    data.isReadingMode = true; 
-                    isReadingAny = true;
-                    if (data.holdStartTime === 0) data.holdStartTime = time;
-                    const holdDuration = time - data.holdStartTime;
-                    const dissolveTime = params.dissolveTime; 
-                    
-                    barContainer.style.opacity = 1;
-                    const progress = Math.min(1, holdDuration / dissolveTime);
-                    bar.style.width = (progress * 100) + '%';
-                    
-                    let shakeOffset = new THREE.Vector3(0,0,0);
-                    let shakeRotationZ = 0; 
-                    let sizeGlitch = 0;     
-                    const warningTime = dissolveTime * 0.66;
-                    
-                    if (holdDuration > warningTime && holdDuration < dissolveTime) {
-                         const instability = (holdDuration - warningTime) / (dissolveTime - warningTime);
-                         const shakeAmp = 0.8 * Math.pow(instability, 3); 
-                         shakeOffset.set((Math.random() - 0.5) * shakeAmp, (Math.random() - 0.5) * shakeAmp, (Math.random() - 0.5) * shakeAmp);
-                         shakeRotationZ = (Math.random() - 0.5) * 0.3 * Math.pow(instability, 2);
-                         sizeGlitch = Math.sin(time * 50) * 0.2 * instability; 
-                         if (Math.sin(time * 30) > 0) { mesh.material.color.setHex(0xaaffff); } else { mesh.material.color.setHex(0xffffff); }
-                         targetOpacity = 1.0;
-                    } else if (holdDuration < warningTime) {
-                        mesh.material.color.setHex(0xffffff); 
-                    }
-
-                    if (holdDuration >= dissolveTime) {
-                        data.isDissolving = true;
-                        cooldownEndTime = Date.now() + params.cooldownTime;
-                        barContainer.style.opacity = 0;
-                        const worldPos = new THREE.Vector3();
-                        mesh.getWorldPosition(worldPos);
-                        createExplosion(worldPos, data.paletteId);
-                        document.body.style.transform = "scale(1.02)";
-                        setTimeout(() => document.body.style.transform = "scale(1)", 100);
-                        return; 
-                    }
-
-                    targetScale = getScreenAdaptedZoomScale() + sizeGlitch; 
-                    if (!data.detailedTex) data.detailedTex = createTexture(data.text, data.subText, data.paletteId);
-                    if (mesh.material.map !== data.detailedTex) mesh.material.map = data.detailedTex;
-                    const ratioFix = (350/256); 
-                    targetScaleY = targetScale * ratioFix;
-
-                    const camDir = new THREE.Vector3();
-                    camera.getWorldDirection(camDir);
-                    // 长按放大也适配屏幕距离
-                    const camDistance = THREE.MathUtils.clamp(window.innerWidth / 50, 20, 30);
-                    const targetWorldPos = camera.position.clone().add(camDir.multiplyScalar(camDistance));
-                    targetWorldPos.add(shakeOffset);
-                    const targetLocalPos = mesh.parent.worldToLocal(targetWorldPos.clone());
-                    mesh.position.lerp(targetLocalPos, 0.15);
-                    const targetWorldQuat = camera.quaternion.clone();
-                    const shakeQuat = new THREE.Quaternion();
-                    shakeQuat.setFromAxisAngle(new THREE.Vector3(0, 0, 1), shakeRotationZ);
-                    targetWorldQuat.multiply(shakeQuat);
-                    const parentWorldQuat = new THREE.Quaternion();
-                    mesh.parent.getWorldQuaternion(parentWorldQuat);
-                    const targetLocalQuat = parentWorldQuat.invert().multiply(targetWorldQuat);
-                    mesh.quaternion.slerp(targetLocalQuat, 0.15);
-
-                } else {
-                    // 恢复卡片漂浮逻辑
-                    data.isReadingMode = false; 
-                    data.holdStartTime = 0; 
-                    if (mesh.material.map !== data.originalTex) mesh.material.map = data.originalTex;
-                    mesh.material.color.setHex(0xffffff); 
-                    targetScaleY = targetScale; 
-                    const floatX = Math.cos(time * data.speed + data.phase) * 0.3 * params.floatSpeed;
-                    const floatY = Math.sin(time * data.speed + data.phase) * 0.5 * params.floatSpeed;
-                    const floatZ = Math.sin(time * data.speed * 0.8 + data.phase) * 0.3 * params.floatSpeed;
-                    const targetBasePos = data.basePos.clone().add(new THREE.Vector3(floatX, floatY, floatZ));
-                    mesh.position.lerp(targetBasePos, 0.1);
-                    mesh.lookAt(camera.position);
-                }
-                
-                mesh.scale.lerp(new THREE.Vector3(targetScale, targetScaleY, 1), 0.1);
-                mesh.material.opacity += (targetOpacity - mesh.material.opacity) * 0.1;
+            }
+            ctx.globalAlpha = 1;
+            requestAnimationFrame(animateParticles);
+        }
+        // 弹窗3D视差
+        function initAuthParallax(){
+            const wrap = document.getElementById("authWrap");
+            const modal = document.getElementById("authModal");
+            modal.addEventListener("mousemove",e=>{
+                const rect = wrap.getBoundingClientRect();
+                const cx = rect.left + rect.width/2;
+                const cy = rect.top + rect.height/2;
+                const ox = (e.clientX - cx)/30;
+                const oy = (e.clientY - cy)/30;
+                wrap.style.transform = `translateY(0) scale(1) rotateX(${oy}deg) rotateY(${-ox}deg)`;
+            })
+            modal.addEventListener("mouseleave",()=>{
+                wrap.style.transform = "translateY(0) scale(1) rotateX(0) rotateY(0)";
+            })
+        }
+        // Mouse tracking for hero card
+        function initHeroCard() {
+            const card = document.getElementById('heroCard');
+            const highlight = document.getElementById('highlight');
+            card.addEventListener('mousemove', (e) => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                const percentX = (x / rect.width) * 100;
+                const percentY = (y / rect.height) * 100;
+                highlight.style.left = `${percentX}%`;
+                highlight.style.top = `${percentY}%`;
+                const rotX = (y - rect.height / 2) / 25;
+                const rotY = (rect.width / 2 - x) / 25;
+                card.style.transform = `perspective(1000px) rotateX(${-rotX}deg) rotateY(${rotY}deg)`;
             });
-
-            if (!isReadingAny) {
-                barContainer.style.opacity = 0;
-                bar.style.width = '0%';
-            }
-
-            if(particles) {
-                particles.rotation.y = time * 0.02;
-                particles.rotation.x = Math.sin(time * 0.01) * 0.1;
-            }
-            
-            // 放大停留时，暂停星云整体旋转
-            if (!isZoomPaused) {
-                popupGroup.rotation.y = -time * params.rotationSpeed;
-            }
-            updateExplosions(0.016); 
-            composer.render();
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg)`;
+            });
         }
-
-        // --- 响应式调整核心函数（适配窗口/屏幕旋转）---
-        function onWindowResize() {
-            // 更新相机宽高比
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            // 更新渲染器/合成器尺寸，适配视口
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            composer.setSize(window.innerWidth, window.innerHeight);
-            // 更新辉光效果的分辨率
-            bloomPass.setSize(window.innerWidth, window.innerHeight);
-            // 屏幕尺寸变化时，若有放大的卡片，重新计算适配比例
-            if (zoomingCard && isZoomPaused) {
-                const targetScale = getScreenAdaptedZoomScale();
-                const ratioFix = 350/256;
-                zoomingCard.scale.lerp(new THREE.Vector3(targetScale, targetScale * ratioFix, 1), 0.5);
+        // Counter animation
+        function animateCounters() {
+            const counters = [
+                {el: document.getElementById('stat-users'), target: 12480},
+                {el: document.getElementById('stat-projects'), target: 8742},
+                {el: document.getElementById('stat-uptime'), target: 99.98}
+            ];
+            counters.forEach(({el, target}) => {
+                let start = 0;
+                const duration = 2200;
+                const increment = target / (duration / 16);
+                const timer = setInterval(() => {
+                    start += increment;
+                    if (start >= target) {
+                        el.textContent = target === 99.98 ? target : Math.floor(target);
+                        clearInterval(timer);
+                    } else {
+                        el.textContent = target === 99.98 ? start.toFixed(2) : Math.floor(start);
+                    }
+                }, 16);
+            });
+        }
+        // Scroll reveal
+        function initScrollReveal() {
+            const sections = document.querySelectorAll('.section');
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) entry.target.classList.add('visible');
+                });
+            }, {threshold: 0.15, rootMargin: "0px 0px -80px 0px"});
+            sections.forEach(section => observer.observe(section));
+        }
+        // 登录注册弹窗控制
+        function showLogin() {
+            const modal = document.getElementById('authModal');
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeLogin() {
+            const modal = document.getElementById('authModal');
+            modal.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+        // 切换登录/注册
+        function initAuthTabs() {
+            const loginTab = document.getElementById('loginTab');
+            const registerTab = document.getElementById('registerTab');
+            const loginForm = document.getElementById('loginForm');
+            const registerForm = document.getElementById('registerForm');
+            loginTab.addEventListener('click', () => {
+                loginTab.classList.add('active');
+                registerTab.classList.remove('active');
+                loginForm.classList.remove('hidden');
+                registerForm.classList.add('hidden');
+            });
+            registerTab.addEventListener('click', () => {
+                registerTab.classList.add('active');
+                loginTab.classList.remove('active');
+                registerForm.classList.remove('hidden');
+                loginForm.classList.add('hidden');
+            });
+        }
+        // 登录处理
+        function handleLogin() {
+            if(!checkLoginForm()) return;
+            const loader = document.getElementById('loginLoader');
+            loader.classList.remove('hidden');
+            setTimeout(() => {
+                loader.classList.add('hidden');
+                closeLogin();
+                createSuccessPulse();
+                showToast('✅ 登录成功！欢迎回来 NEXUS');
+            }, 1200);
+        }
+        // 注册处理
+        function handleRegister() {
+            if(!checkRegForm()) return;
+            const loader = document.getElementById('registerLoader');
+            loader.classList.remove('hidden');
+            setTimeout(() => {
+                loader.classList.add('hidden');
+                closeLogin();
+                createSuccessPulse();
+                showToast('✅ 注册成功！请前往邮箱验证');
+            }, 1500);
+        }
+        // 提示消息
+        function showToast(text) {
+            const msg = document.createElement('div');
+            msg.style.position = 'fixed';
+            msg.style.bottom = '40px';
+            msg.style.left = '50%';
+            msg.style.transform = 'translateX(-50%)';
+            msg.style.background = 'rgba(122,155,181,0.95)';
+            msg.style.color = '#0D1117';
+            msg.style.padding = '16px 32px';
+            msg.style.borderRadius = '9999px';
+            msg.style.zIndex = '2000';
+            msg.style.whiteSpace = 'nowrap';
+            msg.textContent = text;
+            document.body.appendChild(msg);
+            setTimeout(() => {
+                msg.style.transition = 'all 0.6s ease';
+                msg.style.opacity = '0';
+                setTimeout(() => msg.remove(), 600);
+            }, 2800);
+        }
+        function toggleSearch() {
+            const modal = document.getElementById('searchModal');
+            modal.classList.toggle('hidden');
+            if (!modal.classList.contains('hidden')) {
+                setTimeout(() => document.getElementById('searchInput').focus(), 200);
             }
         }
-
-        init();
-        animate();
-
+        function toggleSettings() {
+            alert("⚙️ 设置面板 (演示)");
+        }
+        function showDemo() {
+            showToast('🚀 已进入演示模式（此为静态HTML展示）');
+        }
+        function watchVideo() {
+            alert("📹 视频演示加载中...\n\n（本页面为完整可交互HTML演示）");
+        }
+        function liveMetricPulse() {
+            let val = 87.4;
+            const el = document.getElementById('liveMetric');
+            setInterval(() => {
+                val += (Math.random() * 0.6 - 0.3);
+                if (val > 92) val = 89;
+                if (val < 84) val = 86;
+                el.textContent = val.toFixed(1);
+            }, 1800);
+        }
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.key === '/' && document.getElementById('searchModal').classList.contains('hidden')) {
+                e.preventDefault();
+                toggleSearch();
+            }
+            if (e.key === "Escape") {
+                const modal = document.getElementById('searchModal');
+                if (!modal.classList.contains('hidden')) modal.classList.add('hidden');
+                const authModal = document.getElementById('authModal');
+                if (authModal.classList.contains('active')) closeLogin();
+            }
+        });
+        // Initialize everything
+        window.onload = function() {
+            initParticles();
+            animateParticles();
+            initHeroCard();
+            animateCounters();
+            initScrollReveal();
+            liveMetricPulse();
+            initAuthTabs();
+            initAuthParticle();
+            initAuthParallax();
+            checkPwdStrength();
+            // Mouse tracking for particles
+            document.addEventListener('mousemove', (e) => {
+                mouseX = e.clientX;
+                mouseY = e.clientY;
+            });
+            console.log('%cNEXUS 深空界面已就绪 ✨', 'color:#7A9BB5; font-family:monospace; font-size:13px');
+        };
     </script>
 </body>
 </html>
