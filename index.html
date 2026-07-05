@@ -2,12 +2,15 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- 强化移动端适配 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>NEXUS • 深空界面</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&amp;display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&display=swap');
         
         :root {
             --ice-blue: #7A9BB5;
@@ -18,6 +21,7 @@
         
         * {
             font-family: 'Space Grotesk', system-ui, sans-serif;
+            box-sizing: border-box;
         }
         
         body {
@@ -48,6 +52,13 @@
             border: 1px solid rgba(122, 155, 181, 0.25);
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4),
                         inset 0 0 40px rgba(122, 155, 181, 0.08);
+        }
+        /* 移动端弱化玻璃阴影 */
+        @media (max-width:768px) {
+            .glass {
+                box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+                backdrop-filter: blur(12px);
+            }
         }
         
         .neon-border {
@@ -223,8 +234,15 @@
         }
         /* 生物识别按钮 */
         .bio-btn{
-            width:50px;height:50px;
-            glass rounded-xl flex items-center justify-center mx-auto mt-4
+            width:100%;
+            height:50px;
+            background: rgba(13, 17, 23, 0.65);
+            border: 1px solid rgba(122, 155, 181, 0.25);
+            border-radius:12px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            margin-top:16px;
         }
         /* 顶部全局状态栏 */
         .status-bar{
@@ -237,9 +255,18 @@
             display:flex;
             align-items:center;
             justify-content:center;
-            gap-10;
+            gap:10px;
             font-size:11px;
             color:#7A9BB5;
+            padding:0 10px;
+            overflow-x:auto;
+        }
+        /* 手机状态栏缩短文字 */
+        @media (max-width:768px) {
+            .status-bar span:nth-child(2),
+            .status-bar span:nth-child(3) {
+                display:none;
+            }
         }
         nav{top:24px !important;}
         /* 登录成功全屏脉冲 */
@@ -262,9 +289,124 @@
             margin-top:4px;
             display:none;
         }
+
+        /* ========== 移动端导航汉堡菜单 ========== */
+        .hamburger {
+            display:none;
+            font-size:24px;
+            color:#C4DAE8;
+        }
+        .mobile-nav-wrap {
+            position:fixed;
+            top:24px;
+            left:0;
+            width:100%;
+            height:calc(100vh - 24px);
+            background:rgba(13,17,23,0.98);
+            z-40;
+            transform:translateX(-100%);
+            transition:transform 0.4s ease;
+            padding:40px 24px;
+        }
+        .mobile-nav-wrap.open {
+            transform:translateX(0);
+        }
+        .mobile-nav-item {
+            display:block;
+            font-size:22px;
+            margin:24px 0;
+            color:#C4DAE8;
+        }
+
+        /* ========== 媒体查询响应式全局 ========== */
+        @media (max-width:1200px) {
+            h1 { font-size:56px !important; }
+        }
+        @media (max-width:992px) {
+            /* Hero区域左右分栏改为上下堆叠 */
+            .hero-row {
+                grid-template-columns: 1fr !important;
+                gap:60px !important;
+            }
+            .hero-card {
+                height:auto !important;
+                min-height:420px;
+            }
+            /* 三列卡片改为单列 */
+            .grid-3 {
+                grid-template-columns: 1fr !important;
+            }
+        }
+        @media (max-width:768px) {
+            /* 导航栏隐藏桌面菜单，显示汉堡 */
+            .desktop-nav-left, .desktop-nav-buttons {
+                display:none !important;
+            }
+            .hamburger {
+                display:block !important;
+            }
+            /* 全局缩小内边距 */
+            .section {
+                padding:80px 0 !important;
+            }
+            .max-w-screen-2xl {
+                padding-left:20px !important;
+                padding-right:20px !important;
+            }
+            /* 标题字号大幅缩小 */
+            h1 { font-size:38px !important; }
+            h2 { font-size:32px !important; }
+            h3 { font-size:24px !important; }
+            /* 统计数字缩小 */
+            .stat-number {
+                font-size:36px !important;
+            }
+            /* 登录弹窗缩小padding */
+            #authWrap {
+                padding:30px 20px !important;
+                margin:0 16px;
+            }
+            /* 按钮自适应宽度 */
+            .action-btn {
+                width:100% !important;
+            }
+            /* Hero统计横向改纵向 */
+            .stat-group {
+                flex-direction:column !important;
+                gap:24px !important;
+                align-items:flex-start !important;
+            }
+            /* 顶部CTA卡片padding缩小 */
+            .cta-card {
+                padding:60px 20px !important;
+            }
+        }
+        @media (max-width:480px) {
+            h1 { font-size:32px !important; }
+            /* 登录表单标签、输入框尺寸适配 */
+            .tech-input {
+                padding:14px 16px !important;
+            }
+            /* 弹窗标签间距缩小 */
+            .tab-wrap {
+                gap:40px !important;
+            }
+        }
     </style>
 </head>
 <body class="min-h-screen">
+    <!-- 移动端侧边导航 -->
+    <div class="mobile-nav-wrap" id="mobileNav">
+        <a href="#" class="mobile-nav-item nav-link">产品</a>
+        <a href="#" class="mobile-nav-item nav-link">特性</a>
+        <a href="#" class="mobile-nav-item nav-link">解决方案</a>
+        <a href="#" class="mobile-nav-item nav-link">定价</a>
+        <div class="mt-10 flex flex-col gap-4">
+            <button onclick="showLogin()" class="px-6 py-3 glass rounded-2xl text-base w-full">登录</button>
+            <button onclick="showDemo()" class="px-6 py-3 bg-gradient-to-r from-[#7A9BB5] to-[#C4DAE8] text-[#0D1117] font-semibold rounded-2xl w-full">立即体验</button>
+        </div>
+    </div>
+
     <!-- 顶部全局实时状态栏 -->
     <div class="status-bar">
         <span><i class="fa-solid fa-wifi text-emerald-400 animate-pulse"></i> 节点在线</span>
@@ -277,9 +419,13 @@
 
     <!-- Navbar -->
     <nav class="fixed top-0 left-0 right-0 z-50 glass border-b border-white/10">
-        <div class="max-w-screen-2xl mx-auto px-8 py-5 flex items-center justify-between">
-            <!-- Left Menu -->
-            <div class="flex items-center gap-x-10 text-sm font-medium">
+        <div class="max-w-screen-2xl mx-auto px-5 md:px-8 py-4 flex items-center justify-between">
+            <!-- 移动端汉堡按钮 -->
+            <button class="hamburger" id="hamburgerBtn">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+            <!-- Left Menu 桌面端 -->
+            <div class="desktop-nav-left flex items-center gap-x-6 lg:gap-x-10 text-sm font-medium">
                 <a href="#" class="nav-link text-white/90 hover:text-[#C4DAE8]">产品</a>
                 <a href="#" class="nav-link text-white/90 hover:text-[#C4DAE8]">特性</a>
                 <a href="#" class="nav-link text-white/90 hover:text-[#C4DAE8]">解决方案</a>
@@ -289,11 +435,11 @@
             <!-- Logo -->
             <div class="flex items-center gap-x-3">
                 <div class="w-7 h-7 rounded-full bg-gradient-to-br from-[#7A9BB5] to-[#C4DAE8] flex items-center justify-center text-[#0D1117] font-bold text-xl leading-none pt-0.5">N</div>
-                <span class="text-2xl font-semibold tracking-tighter text-white">小y</span>
+                <span class="text-xl md:text-2xl font-semibold tracking-tighter text-white">小y</span>
             </div>
 
-            <!-- Right Icons -->
-            <div class="flex items-center gap-x-6">
+            <!-- Right Icons 桌面端 -->
+            <div class="desktop-nav-buttons flex items-center gap-x-3 lg:gap-x-6">
                 <button onclick="toggleSearch()" 
                         class="w-10 h-10 flex items-center justify-center text-[#7A9BB5] hover:text-white transition-all hover:scale-110 active:scale-95">
                     <i class="fa-solid fa-magnifying-glass text-xl"></i>
@@ -303,11 +449,11 @@
                     <i class="fa-solid fa-cog text-xl"></i>
                 </button>
                 <button onclick="showLogin()"
-                        class="px-6 py-2.5 glass rounded-2xl text-sm font-medium border border-[#7A9BB5]/30 hover:border-[#C4DAE8] transition-all">
+                        class="px-4 lg:px-6 py-2.5 glass rounded-2xl text-sm font-medium border border-[#7A9BB5]/30 hover:border-[#C4DAE8] transition-all">
                     登录
                 </button>
                 <button onclick="showDemo()"
-                        class="px-6 py-2.5 bg-gradient-to-r from-[#7A9BB5] to-[#C4DAE8] text-[#0D1117] font-semibold rounded-2xl text-sm hover:brightness-110 transition-all">
+                        class="px-4 lg:px-6 py-2.5 bg-gradient-to-r from-[#7A9BB5] to-[#C4DAE8] text-[#0D1117] font-semibold rounded-2xl text-sm hover:brightness-110 transition-all">
                     立即体验
                 </button>
             </div>
@@ -333,7 +479,7 @@
             </div>
 
             <!-- 切换标签 -->
-            <div class="flex justify-center gap-x-12 mb-10 relative z-10">
+            <div class="tab-wrap flex justify-center gap-x-12 mb-10 relative z-10">
                 <button id="loginTab" class="tab-btn active text-lg font-medium text-white">登录</button>
                 <button id="registerTab" class="tab-btn text-lg font-medium text-[#7A9BB5]">注册</button>
             </div>
@@ -353,12 +499,12 @@
                     </div>
                 </div>
                 <!-- 生物识别快捷登录 -->
-                <button class="bio-btn glass w-full py-3 rounded-xl flex items-center justify-center gap-3 hover:bg-white/10 transition-all" onclick="bioLogin()">
+                <button class="bio-btn flex items-center justify-center gap-3 hover:bg-white/10 transition-all" onclick="bioLogin()">
                     <i class="fa-solid fa-fingerprint text-xl"></i>
                     <span>生物快捷解锁</span>
                 </button>
 
-                <div class="flex justify-between items-center">
+                <div class="flex justify-between items-center flex-wrap gap-3">
                     <label class="flex items-center gap-x-2 cursor-pointer">
                         <input type="checkbox" id="rememberAcc" class="rounded bg-[#0D1117] border-[#7A9BB5]/30 text-[#C4DAE8]">
                         <span class="text-sm text-[#C4DAE8]/80">记住我</span>
@@ -366,7 +512,7 @@
                     <a href="#" class="text-sm text-[#7A9BB5] hover:text-[#C4DAE8] transition-colors">忘记密码？</a>
                 </div>
 
-                <button onclick="handleLogin()" class="w-full py-4 bg-gradient-to-r from-[#7A9BB5] to-[#C4DAE8] text-[#0D1117] font-semibold rounded-xl hover:brightness-110 transition-all flex items-center justify-center gap-x-2">
+                <button onclick="handleLogin()" class="action-btn w-full py-4 bg-gradient-to-r from-[#7A9BB5] to-[#C4DAE8] text-[#0D1117] font-semibold rounded-xl hover:brightness-110 transition-all flex items-center justify-center gap-x-2">
                     <span>安全登录</span>
                     <div id="loginLoader" class="loader hidden"></div>
                 </button>
@@ -398,7 +544,7 @@
                     <span class="text-sm text-[#C4DAE8]/80">我已阅读并同意服务条款与隐私政策</span>
                 </label>
 
-                <button onclick="handleRegister()" class="w-full py-4 bg-gradient-to-r from-[#7A9BB5] to-[#C4DAE8] text-[#0D1117] font-semibold rounded-xl hover:brightness-110 transition-all flex items-center justify-center gap-x-2">
+                <button onclick="handleRegister()" class="action-btn w-full py-4 bg-gradient-to-r from-[#7A9BB5] to-[#C4DAE8] text-[#0D1117] font-semibold rounded-xl hover:brightness-110 transition-all flex items-center justify-center gap-x-2">
                     <span>创建账号</span>
                     <div id="registerLoader" class="loader hidden"></div>
                 </button>
@@ -407,8 +553,8 @@
     </div>
 
     <!-- HERO -->
-    <section class="min-h-screen flex items-center pt-32 relative">
-        <div class="max-w-screen-2xl mx-auto px-8 grid grid-cols-2 gap-12 items-center">
+    <section class="min-h-screen flex items-center pt-32 md:pt-40 relative">
+        <div class="max-w-screen-2xl mx-auto px-8 grid hero-row grid-cols-2 gap-12 items-center">
             <!-- Left Content -->
             <div class="space-y-8">
                 <div class="inline-flex items-center gap-x-2 px-5 py-2 glass rounded-3xl text-sm">
@@ -424,20 +570,20 @@
                     在深空般的界面中，构建、协作、决策。融合玻璃态设计与动态光效，重新定义数字工作空间。
                 </p>
                 
-                <div class="flex items-center gap-x-5">
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-x-5 gap-y-4">
                     <button onclick="showDemo()" 
-                            class="px-8 py-4 bg-white text-[#0D1117] rounded-3xl font-semibold text-lg flex items-center gap-x-3 hover:scale-105 transition-transform">
+                            class="action-btn px-8 py-4 bg-white text-[#0D1117] rounded-3xl font-semibold text-lg flex items-center justify-center gap-x-3 hover:scale-105 transition-transform">
                         <span>进入控制台</span>
                         <i class="fa-solid fa-arrow-right"></i>
                     </button>
                     <button onclick="watchVideo()" 
-                            class="px-8 py-4 glass rounded-3xl font-medium flex items-center gap-x-3 hover:bg-white/10 transition-all">
+                            class="action-btn px-8 py-4 glass rounded-3xl font-medium flex items-center justify-center gap-x-3 hover:bg-white/10 transition-all">
                         <i class="fa-solid fa-play"></i>
                         <span>观看演示</span>
                     </button>
                 </div>
                 
-                <div class="flex items-center gap-x-12 pt-6">
+                <div class="stat-group flex items-center gap-x-12 pt-6">
                     <div>
                         <div id="stat-users" class="stat-number text-5xl font-semibold text-white">12480</div>
                         <div class="text-sm text-[#7A9BB5]">活跃用户</div>
@@ -455,12 +601,12 @@
             
             <!-- Glass Hero Card -->
             <div id="heroCard" 
-                 class="hero-card glass rounded-3xl p-10 neon-border h-[520px] relative overflow-hidden cursor-none">
+                 class="hero-card glass rounded-3xl p-6 md:p-10 neon-border h-[520px] relative overflow-hidden cursor-none">
                 <!-- Card Content -->
                 <div class="relative z-10 h-full flex flex-col">
                     <div class="flex justify-between items-start">
                         <div>
-                            <div class="flex items-center gap-x-3">
+                            <div class="flex items-center gap-x-3 flex-wrap">
                                 <div class="px-4 py-1 bg-white/10 text-xs rounded-2xl backdrop-blur-md">Q3 2026</div>
                                 <div class="text-emerald-400 text-sm font-medium flex items-center gap-x-1">
                                     <i class="fa-solid fa-circle-check"></i>
@@ -524,9 +670,9 @@
                 <h2 class="text-5xl font-semibold tracking-tight">为未来而生</h2>
             </div>
             
-            <div class="grid grid-cols-3 gap-8">
+            <div class="grid grid-3 grid-cols-3 gap-8">
                 <!-- Card 1 -->
-                <div class="glass rounded-3xl p-10 neon-border group hover:scale-[1.02] transition-all duration-500">
+                <div class="glass rounded-3xl p-8 md:p-10 neon-border group hover:scale-[1.02] transition-all duration-500">
                     <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#7A9BB5] to-[#C4DAE8] flex items-center justify-center mb-8 text-3xl">🌌</div>
                     <h3 class="text-3xl font-medium mb-3">粒子网格</h3>
                     <p class="text-[#C4DAE8]/70">鼠标驱动的动态背景网格，带来沉浸式空间感。</p>
@@ -534,7 +680,7 @@
                 </div>
                 
                 <!-- Card 2 -->
-                <div class="glass rounded-3xl p-10 neon-border group hover:scale-[1.02] transition-all duration-500">
+                <div class="glass rounded-3xl p-8 md:p-10 neon-border group hover:scale-[1.02] transition-all duration-500">
                     <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#7A9BB5] to-[#C4DAE8] flex items-center justify-center mb-8 text-3xl">📡</div>
                     <h3 class="text-3xl font-medium mb-3">光晕响应</h3>
                     <p class="text-[#C4DAE8]/70">卡片边缘霓虹光随光标角度动态变化。</p>
@@ -542,7 +688,7 @@
                 </div>
                 
                 <!-- Card 3 -->
-                <div class="glass rounded-3xl p-10 neon-border group hover:scale-[1.02] transition-all duration-500">
+                <div class="glass rounded-3xl p-8 md:p-10 neon-border group hover:scale-[1.02] transition-all duration-500">
                     <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#7A9BB5] to-[#C4DAE8] flex items-center justify-center mb-8 text-3xl">📊</div>
                     <h3 class="text-3xl font-medium mb-3">阶梯动画</h3>
                     <p class="text-[#C4DAE8]/70">滚动时区块逐一浮现，富有层次与节奏。</p>
@@ -558,9 +704,9 @@
                 <h2 class="text-5xl font-semibold tracking-tight">定价</h2>
             </div>
             
-            <div class="grid grid-cols-3 gap-8">
+            <div class="grid grid-3 grid-cols-3 gap-8">
                 <!-- Card 1 -->
-                <div class="glass rounded-3xl p-10 neon-border group hover:scale-[1.02] transition-all duration-500">
+                <div class="glass rounded-3xl p-8 md:p-10 neon-border group hover:scale-[1.02] transition-all duration-500">
                     <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#7A9BB5] to-[#C4DAE8] flex items-center justify-center mb-8 text-3xl">🌌</div>
                     <h3 class="text-3xl font-medium mb-3">基础版</h3>
                     <p class="text-[#C4DAE8]/70">19/月</p>
@@ -568,7 +714,7 @@
                 </div>
                 
                 <!-- Card 2 -->
-                <div class="glass rounded-3xl p-10 neon-border group hover:scale-[1.02] transition-all duration-500">
+                <div class="glass rounded-3xl p-8 md:p-10 neon-border group hover:scale-[1.02] transition-all duration-500">
                     <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#7A9BB5] to-[#C4DAE8] flex items-center justify-center mb-8 text-3xl">📡</div>
                     <h3 class="text-3xl font-medium mb-3">pro版</h3>
                     <p class="text-[#C4DAE8]/70">158/年</p>
@@ -576,7 +722,7 @@
                 </div>
                 
                 <!-- Card 3 -->
-                <div class="glass rounded-3xl p-10 neon-border group hover:scale-[1.02] transition-all duration-500">
+                <div class="glass rounded-3xl p-8 md:p-10 neon-border group hover:scale-[1.02] transition-all duration-500">
                     <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#7A9BB5] to-[#C4DAE8] flex items-center justify-center mb-8 text-3xl">📊</div>
                     <h3 class="text-3xl font-medium mb-3">专业版</h3>
                     <p class="text-[#C4DAE8]/70">400/两年</p>
@@ -589,12 +735,12 @@
     <!-- Final CTA -->
     <section class="py-32 border-t border-white/5 relative overflow-hidden">
         <div class="max-w-screen-2xl mx-auto px-8 text-center">
-            <div class="glass max-w-2xl mx-auto rounded-3xl p-16">
+            <div class="cta-card glass max-w-2xl mx-auto rounded-3xl p-16">
                 <h2 class="text-5xl font-semibold mb-6">准备好进入深空了吗？</h2>
                 <p class="text-xl text-[#C4DAE8]/80 mb-12">加入数千名先锋用户，体验下一代界面设计。</p>
                
                 <button onclick="showDemo()" 
-                        class="px-12 py-6 text-xl font-semibold bg-white text-black rounded-3xl hover:scale-105 active:scale-95 transition-all inline-flex items-center gap-x-4">
+                        class="action-btn px-12 py-6 text-xl font-semibold bg-white text-black rounded-3xl hover:scale-105 active:scale-95 transition-all inline-flex items-center justify-center gap-x-4">
                     免费启动
                     <span class="text-2xl">→</span>
                 </button>
@@ -610,7 +756,7 @@
     </footer>
 
     <!-- Search Modal -->
-    <div id="searchModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-xl z-[100] flex items-start justify-center pt-32">
+    <div id="searchModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-xl z-[100] flex items-start justify-center pt-32 px-4">
         <div class="glass w-full max-w-xl rounded-3xl p-8">
             <input id="searchInput" 
                    type="text" 
@@ -622,7 +768,15 @@
     <script>
         // Tailwind script already included via CDN
         function initTailwind() {}
-        
+
+        // ========== 移动端汉堡菜单逻辑 ==========
+        const hamburgerBtn = document.getElementById('hamburgerBtn');
+        const mobileNav = document.getElementById('mobileNav');
+        hamburgerBtn.addEventListener('click', ()=>{
+            mobileNav.classList.toggle('open');
+            document.body.style.overflow = mobileNav.classList.contains('open') ? 'hidden' : '';
+        })
+
         // 弹窗内部粒子系统
         let authCanvas, authCtx, authParticles = [];
         function initAuthParticle(){
@@ -767,13 +921,16 @@
             }
             resize();
             window.addEventListener('resize', resize);
-            for (let i = 0; i < 180; i++) particles.push(new Particle());
+            // 手机减少粒子数量，提升性能
+            const totalParticles = window.innerWidth < 768 ? 90 : 180;
+            for (let i = 0; i < totalParticles; i++) particles.push(new Particle());
         }
         let mouseX = 0, mouseY = 0;
         function animateParticles() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.strokeStyle = 'rgba(122, 155, 181, 0.1)';
             ctx.lineWidth = 0.8;
+            const connectDist = window.innerWidth < 768 ? 60 : 110;
             for (let i = 0; i < particles.length; i++) {
                 const p1 = particles[i];
                 p1.update(mouseX, mouseY);
@@ -783,219 +940,6 @@
                     const dx = p1.x - p2.x;
                     const dy = p1.y - p2.y;
                     const dist = Math.sqrt(dx * dx + dy * dy);
-                    if (dist < 110) {
-                        ctx.globalAlpha = (110 - dist) / 110;
-                        ctx.beginPath();
-                        ctx.moveTo(p1.x, p1.y);
-                        ctx.lineTo(p2.x, p2.y);
-                        ctx.stroke();
-                    }
-                }
-            }
-            ctx.globalAlpha = 1;
-            requestAnimationFrame(animateParticles);
-        }
-        // 弹窗3D视差
-        function initAuthParallax(){
-            const wrap = document.getElementById("authWrap");
-            const modal = document.getElementById("authModal");
-            modal.addEventListener("mousemove",e=>{
-                const rect = wrap.getBoundingClientRect();
-                const cx = rect.left + rect.width/2;
-                const cy = rect.top + rect.height/2;
-                const ox = (e.clientX - cx)/30;
-                const oy = (e.clientY - cy)/30;
-                wrap.style.transform = `translateY(0) scale(1) rotateX(${oy}deg) rotateY(${-ox}deg)`;
-            })
-            modal.addEventListener("mouseleave",()=>{
-                wrap.style.transform = "translateY(0) scale(1) rotateX(0) rotateY(0)";
-            })
-        }
-        // Mouse tracking for hero card
-        function initHeroCard() {
-            const card = document.getElementById('heroCard');
-            const highlight = document.getElementById('highlight');
-            card.addEventListener('mousemove', (e) => {
-                const rect = card.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
-                const percentX = (x / rect.width) * 100;
-                const percentY = (y / rect.height) * 100;
-                highlight.style.left = `${percentX}%`;
-                highlight.style.top = `${percentY}%`;
-                const rotX = (y - rect.height / 2) / 25;
-                const rotY = (rect.width / 2 - x) / 25;
-                card.style.transform = `perspective(1000px) rotateX(${-rotX}deg) rotateY(${rotY}deg)`;
-            });
-            card.addEventListener('mouseleave', () => {
-                card.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg)`;
-            });
-        }
-        // Counter animation
-        function animateCounters() {
-            const counters = [
-                {el: document.getElementById('stat-users'), target: 12480},
-                {el: document.getElementById('stat-projects'), target: 8742},
-                {el: document.getElementById('stat-uptime'), target: 99.98}
-            ];
-            counters.forEach(({el, target}) => {
-                let start = 0;
-                const duration = 2200;
-                const increment = target / (duration / 16);
-                const timer = setInterval(() => {
-                    start += increment;
-                    if (start >= target) {
-                        el.textContent = target === 99.98 ? target : Math.floor(target);
-                        clearInterval(timer);
-                    } else {
-                        el.textContent = target === 99.98 ? start.toFixed(2) : Math.floor(start);
-                    }
-                }, 16);
-            });
-        }
-        // Scroll reveal
-        function initScrollReveal() {
-            const sections = document.querySelectorAll('.section');
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) entry.target.classList.add('visible');
-                });
-            }, {threshold: 0.15, rootMargin: "0px 0px -80px 0px"});
-            sections.forEach(section => observer.observe(section));
-        }
-        // 登录注册弹窗控制
-        function showLogin() {
-            const modal = document.getElementById('authModal');
-            modal.classList.add('active');
-            document.body.style.overflow = 'hidden';
-        }
-        function closeLogin() {
-            const modal = document.getElementById('authModal');
-            modal.classList.remove('active');
-            document.body.style.overflow = 'auto';
-        }
-        // 切换登录/注册
-        function initAuthTabs() {
-            const loginTab = document.getElementById('loginTab');
-            const registerTab = document.getElementById('registerTab');
-            const loginForm = document.getElementById('loginForm');
-            const registerForm = document.getElementById('registerForm');
-            loginTab.addEventListener('click', () => {
-                loginTab.classList.add('active');
-                registerTab.classList.remove('active');
-                loginForm.classList.remove('hidden');
-                registerForm.classList.add('hidden');
-            });
-            registerTab.addEventListener('click', () => {
-                registerTab.classList.add('active');
-                loginTab.classList.remove('active');
-                registerForm.classList.remove('hidden');
-                loginForm.classList.add('hidden');
-            });
-        }
-        // 登录处理
-        function handleLogin() {
-            if(!checkLoginForm()) return;
-            const loader = document.getElementById('loginLoader');
-            loader.classList.remove('hidden');
-            setTimeout(() => {
-                loader.classList.add('hidden');
-                closeLogin();
-                createSuccessPulse();
-                showToast('✅ 登录成功！欢迎回来 NEXUS');
-            }, 1200);
-        }
-        // 注册处理
-        function handleRegister() {
-            if(!checkRegForm()) return;
-            const loader = document.getElementById('registerLoader');
-            loader.classList.remove('hidden');
-            setTimeout(() => {
-                loader.classList.add('hidden');
-                closeLogin();
-                createSuccessPulse();
-                showToast('✅ 注册成功！请前往邮箱验证');
-            }, 1500);
-        }
-        // 提示消息
-        function showToast(text) {
-            const msg = document.createElement('div');
-            msg.style.position = 'fixed';
-            msg.style.bottom = '40px';
-            msg.style.left = '50%';
-            msg.style.transform = 'translateX(-50%)';
-            msg.style.background = 'rgba(122,155,181,0.95)';
-            msg.style.color = '#0D1117';
-            msg.style.padding = '16px 32px';
-            msg.style.borderRadius = '9999px';
-            msg.style.zIndex = '2000';
-            msg.style.whiteSpace = 'nowrap';
-            msg.textContent = text;
-            document.body.appendChild(msg);
-            setTimeout(() => {
-                msg.style.transition = 'all 0.6s ease';
-                msg.style.opacity = '0';
-                setTimeout(() => msg.remove(), 600);
-            }, 2800);
-        }
-        function toggleSearch() {
-            const modal = document.getElementById('searchModal');
-            modal.classList.toggle('hidden');
-            if (!modal.classList.contains('hidden')) {
-                setTimeout(() => document.getElementById('searchInput').focus(), 200);
-            }
-        }
-        function toggleSettings() {
-            alert("⚙️ 设置面板 (演示)");
-        }
-        function showDemo() {
-            showToast('🚀 已进入演示模式（此为静态HTML展示）');
-        }
-        function watchVideo() {
-            alert("📹 视频演示加载中...\n\n（本页面为完整可交互HTML演示）");
-        }
-        function liveMetricPulse() {
-            let val = 87.4;
-            const el = document.getElementById('liveMetric');
-            setInterval(() => {
-                val += (Math.random() * 0.6 - 0.3);
-                if (val > 92) val = 89;
-                if (val < 84) val = 86;
-                el.textContent = val.toFixed(1);
-            }, 1800);
-        }
-        // Keyboard shortcuts
-        document.addEventListener('keydown', (e) => {
-            if (e.key === '/' && document.getElementById('searchModal').classList.contains('hidden')) {
-                e.preventDefault();
-                toggleSearch();
-            }
-            if (e.key === "Escape") {
-                const modal = document.getElementById('searchModal');
-                if (!modal.classList.contains('hidden')) modal.classList.add('hidden');
-                const authModal = document.getElementById('authModal');
-                if (authModal.classList.contains('active')) closeLogin();
-            }
-        });
-        // Initialize everything
-        window.onload = function() {
-            initParticles();
-            animateParticles();
-            initHeroCard();
-            animateCounters();
-            initScrollReveal();
-            liveMetricPulse();
-            initAuthTabs();
-            initAuthParticle();
-            initAuthParallax();
-            checkPwdStrength();
-            // Mouse tracking for particles
-            document.addEventListener('mousemove', (e) => {
-                mouseX = e.clientX;
-                mouseY = e.clientY;
-            });
-            console.log('%cNEXUS 深空界面已就绪 ✨', 'color:#7A9BB5; font-family:monospace; font-size:13px');
-        };
-    </script>
-</body>
-</html>
+                    if (dist < connectDist) {
+                        ctx.globalAlpha = (connectDist - dist) / connectDist;
+                        ctx.beginPath
